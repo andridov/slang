@@ -1,0 +1,26 @@
+data/projects/*
+data_new/projects/*
+!data/projects/example/
+#data/config/local/*
+logs/*.log
+__pycache__/*
+
+#utils related 
+data/slang_db/temp/*
+data/slang_db/slang_data.sldb
+#data/config/plugin/keystroke/ui.env.json
+
+
+# uncomment this, if you do not want to save words database
+# data/slang_db/*
+
+*.apkg
+
+*sl_tmp*
+.DS_Store
+.tags
+tags
+*.pyc
+*.swp
+*.swo
+*.sublime-workspace

@@ -1,0 +1,40 @@
+{
+	
+	"folders":
+	[
+		{
+			"path": ".",
+			"folder_exclude_patterns": ["__pycache__"],
+			"follow_symlinks": true
+		},
+	],
+	"folder_exclude_patterns":
+	[
+		"pycache*"
+	],
+	"build_systems":
+	[
+		{
+			"name": "slang test",
+			"cmd": [ "python", "-u", "slang.py", "-project-name", "test"],
+			"env":{
+				"PYTHONPATH": ".", 
+				"PYTHONIOENCODING": "utf8"
+			},
+			"working_dir": "$project_path/src",
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"selector": "source.python"
+		},
+		{
+			"name": "keystroke test",
+			"cmd": [ "python", "utils.py", "--keystroke", "--language", "en-ru" ],
+			"env":{
+				"PYTHONPATH": ".", 
+				"PYTHONIOENCODING": "utf8"
+			},
+			"working_dir": "$project_path/src",
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"selector": "source.python"
+		}
+	]
+}

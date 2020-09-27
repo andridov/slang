@@ -1,0 +1,11 @@
+logger
+pysqlite3
+Image
+wxPython
+Pillow
+requests
+googletrans
+pycocoa
+python-vlc
+fuzzywuzzy
+python-Levenshtein

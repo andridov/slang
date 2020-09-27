@@ -1,0 +1,41 @@
+.card {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  text-align: center;
+  color: black;
+  background-color: white;
+}
+.base_word {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 30px;
+  font-style: bold;
+  color: black;
+}
+.mean_word {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 30px;
+  color: green;
+}
+.note {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+}
+.img img {
+}
+.ex_img ex_img {
+}
+.ex_base {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 20px;
+  color: gray;
+  font-style: bold;
+}
+.ex_mean {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 20px;
+  color: black;
+}
+.ex_note {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+}
