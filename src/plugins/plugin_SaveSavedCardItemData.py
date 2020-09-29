@@ -8,11 +8,11 @@ from datetime import datetime
 from plugin_Base import PluginBase
 
 class SaveSavedCardItemData(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.__append_saved_cards()
         self.__save_current_card_items_list()
 

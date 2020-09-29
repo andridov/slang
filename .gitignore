@@ -8,7 +8,7 @@ __pycache__/*
 #utils related 
 data/slang_db/temp/*
 data/slang_db/slang_data.sldb
-#data/config/plugin/keystroke/ui.env.json
+data/config/plugin/keystroke/ui.env.json
 
 
 # uncomment this, if you do not want to save words database

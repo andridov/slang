@@ -6,11 +6,11 @@ import shutil
 from plugin_Base import PluginBase
 
 class RemoveTempData(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         for pattern_key in self.env["remove_file_patterns"]:
             pattern = self.env[pattern_key]
             self.logger.debug("deleting {}:".format(pattern))

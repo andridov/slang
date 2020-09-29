@@ -5,11 +5,11 @@ from googletrans import Translator
 from plugin_Base import PluginBase
 
 class TranslateText(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.env["translate_text_definition"] = ""
 
         if not self.env["translate_text_term"]:

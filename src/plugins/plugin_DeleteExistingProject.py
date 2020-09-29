@@ -5,11 +5,11 @@ from plugin_Base import PluginBase
 from sl_exceptions import SlProgramStatus
 
 class DeleteExistingProject(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         if not self.env["cmd_known_args"].delete_project:
             return
 

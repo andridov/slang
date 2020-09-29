@@ -3,11 +3,11 @@ from zipfile import ZipFile
 from plugin_Base import PluginBase
 
 class ApkgExtract(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.__extract_apkg_archieve()
 
 

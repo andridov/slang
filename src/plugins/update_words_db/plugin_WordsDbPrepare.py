@@ -11,12 +11,12 @@ from sl_exceptions import SlPluginStatus \
 from plugin_Base import PluginBase
 
 class WordsDbPrepare(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
-        
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
 
 
-    def process(self, param_map=None):
+
+    def process(self, **kwargs):
         self.__create_project_params()
         self.__clean_objects()
         self.__create_objects()

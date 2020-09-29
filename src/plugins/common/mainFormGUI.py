@@ -539,15 +539,13 @@ class CardTab:
 
 
     def __image_set_bitmap(self, bitmap):
-        params = {
-            "original_bitmap": 
-                self.bitmap_resize(bitmap, self.image_size.GetValue()),
-            "image_size":
-                self.tab_sizer.GetCellSize(self.image_row, self.image_col)}
-
-        PluginLoader(self.env, "ImageResize").process(params)
+        out_bitmap = PluginLoader(self.env, "ImageResize").process(
+            original_bitmap=
+                self.bitmap_resize(bitmap, self.image_size.GetValue())
+            , image_size=
+                self.tab_sizer.GetCellSize(self.image_row, self.image_col))
         
-        self.image.SetBitmap(params["out_bitmap"])
+        self.image.SetBitmap(out_bitmap)
 
 
     def __paste_image_from_clipboard(self):

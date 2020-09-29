@@ -11,11 +11,11 @@ from plugin_Base import PluginBase
 from sl_pluginLoader import PluginLoader
 
 class GatherCardItemMediaData(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         tab_ids_list = self.env["tab_ids_list"]
         card_item = self.env["card_item"]
 

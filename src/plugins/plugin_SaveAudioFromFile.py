@@ -3,11 +3,11 @@ import subprocess
 from plugin_Base import PluginBase
 
 class SaveAudioFromFile(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         command = []
         for cn in self.env["command_param_names"]:
             command.append(self.env[cn])

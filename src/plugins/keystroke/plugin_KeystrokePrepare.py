@@ -7,11 +7,11 @@ from plugin_Base import PluginBase
 
 
 class KeystrokePrepare(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.__parse_language()
         self.__add_db_required_data()
 
@@ -35,22 +35,17 @@ class KeystrokePrepare(PluginBase):
             request = request.format(
                 table=table, columns=columns, values=values_template)
 
-            query_item = {}
-            query_item["query"] = request
-            query_item["data"] = values
-            sql_queries.append(query_item)
+            sql_queries.append({ "query": request, "data": values })
 
         #delete notes with empty term field.
-        query_item = {}
-        query_item["query"] = self.env["sql_delete_empty_term_notes"]
-        query_item["data"] = ()
-        sql_queries.append(query_item)
+        sql_queries.append({ "query": self.env["sql_delete_empty_term_notes"]
+            , "data": () })
 
-        self.env["sql_queries_list"] = sql_queries
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
-
+        PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list=sql_queries)
 
         self.logger.info("preparing database is finished")
+
 
 
     def __parse_language(self):

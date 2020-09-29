@@ -32,10 +32,10 @@ class PluginEntryPointProcessor:
         
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         for plugin_name in self._env["plugins"]:
             try:
-                PluginLoader(self._env, plugin_name).process(param_map)
+                PluginLoader(self._env, plugin_name).process(**kwargs)
 
             except SlPluginStatus as status:
                 self.logger.warning(

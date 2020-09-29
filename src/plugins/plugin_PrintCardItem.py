@@ -3,11 +3,11 @@ import json
 from plugin_Base import PluginBase
 
 class PrintCardItem(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.logger.info(json.dumps(
             self.env["card_item"]
             , indent=2, ensure_ascii=False, sort_keys=False).encode('utf8'))

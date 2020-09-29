@@ -10,12 +10,12 @@ from plugin_Base import PluginBase
 
 
 class LoadImageFromUrl(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.env["plugin_load_image_status"] = self.__load_image_from_url()
 
 

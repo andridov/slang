@@ -6,11 +6,11 @@ from plugin_Base import PluginBase
 from sl_exceptions import SlProgramStatus
 
 class CreateNewProject(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
 
         if os.path.exists(self.env["prj_dir"]):
             self.logger.info("Project already exists, project_name = {}".format(

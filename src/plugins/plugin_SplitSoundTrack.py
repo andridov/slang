@@ -9,11 +9,11 @@ from subtitles import SubTitle
 
 
 class SplitSoundTrack(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.env.print_env()
 
         SubTitle

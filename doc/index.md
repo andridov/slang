@@ -8,6 +8,9 @@ started at [2.02.2019]
 
 ### [root readme](../README.md)
 ### [directory structure](directoryStructure.md)
+
+### [SQLite queries](sqlQueries.md)
+### [How to ...](howTo.md)
 ### [TODO List](todoList.md)
 
 ---
@@ -93,89 +96,6 @@ extract from youtube:
 `youtube-dl --all-subs -f best ...`
 `ffmpeg -i my_file.mkv -b:a 64k -ac 2 out.mp3`
 
-# queries
-
-## SQLite
-
-Select list of notes in order to show.
-```sql
-select
-    n.id 
-    , datetime(a.last_used_time, 'unixepoch') as last_used_time
-    , datetime(a.last_used_time + a.pace_time, 'unixepoch') as next_use_time
-    , datetime(a.last_used_time + a.pace_time, 'unixepoch') < datetime('now') as ex
-    , a.pace_time
-    , n.term
-    , n.definition
-from achievements a
-join types t on t.id = a.item_type_id and t.name = 'note'
-join notes n on n.id = a.item_id 
-order by next_use_time
-```
-
-inserting note with avoid duplication of id
-```sql
-BEGIN;
-    --PRAGMA temp_store = 2;
-    CREATE TEMP TABLE _temp_note(
-        id integer primary key, term text not null, definition text not null);
-    
-    INSERT INTO _temp_note(id, term, definition) VALUES (1586010650, 'a6', 'b6');
-    
-    INSERT INTO test_notes 
-        SELECT 
-        CASE 
-            WHEN (
-                select tn.id from _temp_note as tmpn 
-                left outer join test_notes tn on tmpn.id = tn.id limit 1
-                ) is NULL THEN id
-            ELSE (select max(tn.id) + 1 from test_notes tn)
-        END as id
-        , term
-        , definition 
-        FROM _temp_note ORDER BY id LIMIT 1;
-    
-    DROP TABLE _temp_note;
-END; 
-```
-
-```sql
-    CREATE TABLE temp_vars(
-        deque_id integer,
-        base_category_name text,
-        description text,
-        current_scope_id integer
-    );
-    
-    insert into temp_vars(deque_id, base_category_name, description)
-    values(15, 'youtube', 'youtube_videos_002');
-    
-    insert into tags (name, description)
-    values(
-        (select file_name from deques where id=(select deque_id from temp_vars))
-        , (select description from temp_vars)
-    );
-    
-    update temp_vars set current_scope_id=(select max(key_id)+1 from scope);
-    
-    insert into scope(scope_type_id, key_id, value_id)
-    values(
-        (select id from types where name='tag')
-        , (select current_scope_id from temp_vars)
-        , (select id from tags where name=(select base_category_name from temp_vars))
-    );
-    
-    insert into scope(scope_type_id, key_id, value_id)
-    values(
-        (select id from types where name='tag')
-        , (select current_scope_id from temp_vars)
-        , ( select t.id from tags t
-            join deques d on d.file_name=t.name
-            join temp_vars tv on tv.deque_id = d.id)
-    );
-
-    update deques set tags_scope_id=(select current_scope_id from temp_vars) where id=(select deque_id from temp_vars);
-```
 
 ---
 # other links

@@ -13,11 +13,11 @@ from plugin_Base import PluginBase
 
 
 class StartSpeedGUI(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.__draw_gui()
 
 
@@ -283,21 +283,15 @@ class StartSpeedGUI(PluginBase):
 
 
     def _show_media(self):
-        dir = self.env["sl_cfg_plugin_dir"]
-        self.env["sl_cfg_plugin_dir"] = dir + "\\.."
-
-        params = {
-            "original_bitmap": wx.Image(self.env["image_blob_file"]
+        out_bitmap = PluginLoader(self.env, "ImageResize").process(
+            original_bitmap=wx.Image(self.env["image_blob_file"]
                     , wx.BITMAP_TYPE_ANY).ConvertToBitmap() \
                 if os.path.isfile(self.env["image_blob_file"]) \
                 else wx.Image(self.env["no_image_jpg"]
-                    , wx.BITMAP_TYPE_ANY).ConvertToBitmap(),
-            "image_size": self.image.GetSize()
-        }
-        PluginLoader(self.env, "ImageResize").process(params)
-        self.image.SetBitmap(params["out_bitmap"])
-
-        self.env["sl_cfg_plugin_dir"] = dir
+                    , wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+            , image_size=self.image.GetSize() )
+        
+        self.image.SetBitmap(out_bitmap)
         
 
 
@@ -339,10 +333,13 @@ class StartSpeedGUI(PluginBase):
         sql_query_item["query"] = self.env["sql_select_speed_test_history"]
         sql_query_item["data"] = ()
         self.env["sql_queries_list"] = [ sql_query_item ]
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
+        q_res = PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list=[{
+                "query": self.env["sql_select_speed_test_history"]
+                , "data":() }])
 
         self.__stat_items = []
-        for i in self.env["sql_query_results_list"][0]:
+        for i in q_res[0]:
             item = {}
             item["id"] = i[0]
             item["start_time"] = i[1]
@@ -405,51 +402,46 @@ class StartSpeedGUI(PluginBase):
         for tr in text_results:
             self.logger.info("\t{}: {} <=> {}".format(
                 tr["note_id"], tr["incorrect"], tr["correct"]))
-        
-        sql_query_item = {}
-        sql_query_item["query"] = self.env["sql_select_next_scope_id"]
-        sql_query_item["data"] = ( "note", )
-        self.env["sql_queries_list"] = [ sql_query_item ]
 
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
+        note_scope_id = PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list=[{ "query": self.env["sql_select_next_scope_id"]
+                , "data": ( "note", ) }])[0][0][0]
 
-        note_scope_id = self.env["sql_query_results_list"][0][0][0]
         note_ids_scope = note_scope_id
 
-        self.env["sql_queries_list"] = []
-
+        queries_list = []
         for n in self.__notes:
             sql_query_item = {}
             sql_query_item["query"] = self.env["sql_insert_item_to_scope"]
             sql_query_item["data"] = ("note", note_ids_scope, n["id"])
-            self.env["sql_queries_list"].append(sql_query_item)
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
+            queries_list.append(sql_query_item)
+        PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list=queries_list)
 
         if (err_notes_count > 0):
             note_scope_id +=1
             err_note_ids_scope = note_scope_id
+            queries_list = []
             for enid in err_notes_ids_set:
                 sql_query_item = {}
                 sql_query_item["query"] = self.env["sql_insert_item_to_scope"]
                 sql_query_item["data"] = ('note', err_note_ids_scope, enid)
-                self.env["sql_queries_list"].append(sql_query_item)
-            PluginLoader(self.env, "KeystrokeUpdateDb").process()
+                squeries_list.append(sql_query_item)
+            PluginLoader(self.env, self.env["sl_db_query"]).process(
+                queries_list=queries_list)
         else:
             err_note_ids_scope = None
 
-        sql_insert_result_item = {}
-        sql_insert_result_item["query"] = \
-            self.env["sql_insert_speed_test_result"]
 
-        sql_insert_result_item["data"] = (
-            start_time, end_time
-            , notes_count, note_ids_scope
-            , words_count, symbols_count
-            , speed_wpm, speed_spm
-            , err_notes_count, err_note_ids_scope
-            , err_words_count)
-        self.env["sql_queries_list"] = [ sql_insert_result_item ]
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
+        PluginLoader(self.env, self.env["sl_db_query"]).process(
+             queries_list=[{
+                "query": self.env["sql_insert_speed_test_result"]
+                , "data": ( start_time, end_time
+                    , notes_count, note_ids_scope
+                    , words_count, symbols_count
+                    , speed_wpm, speed_spm
+                    , err_notes_count, err_note_ids_scope
+                    , err_words_count) }])
 
         self.__save_achievements()
 
@@ -502,8 +494,8 @@ class StartSpeedGUI(PluginBase):
 
             requests.append(sql_query_item)
 
-        self.env["sql_queries_list"] = requests
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
+        PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list=requests)
 
 
     def __rate_note(self, note):
@@ -621,7 +613,7 @@ class StartSpeedGUI(PluginBase):
 
     def __select_current_note(self):
         self.env["current_note_id"] = self.__notes[self.current_note]["id"]
-        PluginLoader(self.env, "LoadNoteMedia").process()
+        PluginLoader(self.env, "keystroke/LoadNoteMedia").process()
         self._show_media()
         self._show_note(self.__notes[self.current_note])
 

@@ -6,12 +6,12 @@ import sqlite3
 from plugin_Base import PluginBase
 
 class WordsDbCreate(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         if os.path.isfile(self.env["prj_database_file"]):
             self.logger.info("database file already exists: {}".format(
                 self.env["prj_database_file"]))

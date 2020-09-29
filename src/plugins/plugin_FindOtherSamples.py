@@ -6,11 +6,11 @@ import sqlite3
 from plugin_Base import PluginBase
 
 class FindOtherSamples(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         if "sl_slang_db_add_older_notes" not in self.env \
             or not self.env["sl_slang_db_add_older_notes"] \
             or not os.path.isfile(self.env["sl_slang_database_file"]):

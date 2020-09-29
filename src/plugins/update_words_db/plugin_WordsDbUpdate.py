@@ -5,12 +5,13 @@ import json
 import shutil
 import sqlite3
 
+from sl_pluginLoader import PluginLoader
 from plugin_Base import PluginBase
 
 
 class WordsDbUpdate(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
 
         self.__deque_name = ""
         self.__term_language = ""
@@ -18,7 +19,7 @@ class WordsDbUpdate(PluginBase):
 
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.__get_deque_info()
         self.__read_data()
         self.__update_db_data()
@@ -74,9 +75,12 @@ class WordsDbUpdate(PluginBase):
             self.__deque_description = records[0][5]
 
         # find and delete existing cards/notes/media
-        # TODO: should be update only, without deleting.
-        for delete_instruction in self.env["sql_delete_deque_instructions"]:
-            self.__cursor.execute(delete_instruction.format(deque_id=deque_id))
+        # deletion do not applied anymore
+        # !!! all existing cards will remain without changes, only new ones 
+        # will  be added
+
+        # for delete_instruction in self.env["sql_delete_deque_instructions"]:
+        #     self.__cursor.execute(delete_instruction.format(deque_id=deque_id))
 
         for card in self.env["card_items"]:
             self.__insert_card(deque_id, card)
@@ -136,6 +140,17 @@ class WordsDbUpdate(PluginBase):
         if not card or not deque_id:
             return
 
+        # check the card id
+        q_res = PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list=[{ 
+            "query": self.env["sql_select_existing_notes_by_time"]
+            , "data" : (card["creation_time"],) }] )
+        if len(q_res[0]):
+            self.logger.warning("Note(& expamles) already present in database: "
+                "card_creation_time={}, term={}".format(
+                    card["creation_time"], card["term"]))
+            return
+
         self.__cursor.execute(self.env["sql_insert_card"].format(
             deque_id=deque_id))
         self.__cursor.execute(self.env["sql_select_empty_card"].format(
@@ -143,9 +158,9 @@ class WordsDbUpdate(PluginBase):
         records = self.__cursor.fetchall()
         card_id = records[0][0]
 
+
         notes = []
         note_ids = []
-
         notes.append(card)
         notes.extend(card["examples"])
         for note in notes:

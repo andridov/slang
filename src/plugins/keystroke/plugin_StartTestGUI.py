@@ -22,21 +22,21 @@ class StartTest():
     def get_next_note(self):
         self.k_ratio = 1.0
         items_count = 5
-        sql_query_item = {}
-        sql_query_item["query"] = self.env["sql_select_expired_notes"].format(
-            count=items_count)
-        sql_query_item["data"] = ()
-        self.env["sql_queries_list"] = [ sql_query_item ]
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
+
+        q_res = PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list = [{
+                "query" :  self.env["sql_select_expired_notes"].format(
+                    count=items_count)
+                , "data" : () }])
 
         # there are no expired notes, loading new ones
-        if not len(self.env["sql_query_results_list"][0]):
-            sql_query_item["query"] = self.env["sql_select_new_notes"].format(
-                count=items_count)
-            PluginLoader(self.env, "KeystrokeUpdateDb").process()
+        if not len(q_res[0]):
+            sql = self.env["sql_select_new_notes"].format( count=items_count)
+            q_res = PluginLoader(self.env, self.env["sl_db_query"]).process(
+                queries_list = [{ "query" : sql, "data" : () }] )
 
 
-        for r in self.env["sql_query_results_list"][0]:
+        for r in q_res[0]:
             note = self.__get_note_from_result(r)
             if note:
                 self.__current_note = note
@@ -154,19 +154,19 @@ class StartTest():
             , n["pace_factor"]
             , n["reviews_count"] + 1)
 
-        self.env["sql_queries_list"] = [sql_query_item]
-        PluginLoader(self.env, "KeystrokeUpdateDb").process()
+        PluginLoader(self.env, self.env["sl_db_query"]).process(
+            queries_list=[sql_query_item])
 
 
 
 class StartTestGUI(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         self.st = StartTest(self.env)
 
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.__draw_gui()
         self.__start_test()
 
@@ -371,7 +371,7 @@ class StartTestGUI(PluginBase):
 
     def __show_current_note(self, note):
         self.env["current_note_id"] = note["id"]
-        PluginLoader(self.env, "LoadNoteMedia").process()
+        PluginLoader(self.env, "keystroke/LoadNoteMedia").process()
         self.__show_media()
         self.definition_note.SetValue(note["definition_note"])
         self.definition.SetValue(note["definition"])
@@ -415,18 +415,13 @@ class StartTestGUI(PluginBase):
 
 
     def __show_media(self):
-        dir = self.env["sl_cfg_plugin_dir"]
-        self.env["sl_cfg_plugin_dir"] = dir + "\\.."
 
-        params = {
-            "original_bitmap": wx.Image(self.env["image_blob_file"]
+        out_bitmap = PluginLoader(self.env, "ImageResize").process(
+            original_bitmap=wx.Image(self.env["image_blob_file"]
                     , wx.BITMAP_TYPE_ANY).ConvertToBitmap() \
                 if os.path.isfile(self.env["image_blob_file"]) \
                 else wx.Image(self.env["no_image_jpg"]
-                    , wx.BITMAP_TYPE_ANY).ConvertToBitmap(),
-            "image_size": self.image.GetSize()
-        }
-        PluginLoader(self.env, "ImageResize").process(params)
-        self.image.SetBitmap(params["out_bitmap"])
+                    , wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+            , image_size=self.image.GetSize() )
 
-        self.env["sl_cfg_plugin_dir"] = dir
+        self.image.SetBitmap(out_bitmap)

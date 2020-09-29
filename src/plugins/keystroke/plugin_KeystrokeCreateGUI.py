@@ -7,8 +7,8 @@ from sl_pluginLoader import PluginLoader
 
 
 class KeystrokeCreateGUI(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         self.__app = wx.App(False)
         self.logger.info('initializing GUI')
         self.__build_gui()
@@ -16,7 +16,7 @@ class KeystrokeCreateGUI(PluginBase):
 
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
         self.logger.info('show GUI ...')
         self.__app.MainLoop()
         self.logger.info('GUI closed!')
@@ -37,9 +37,9 @@ class KeystrokeCreateGUI(PluginBase):
         self.env["win_panel"] = wx.Panel(self.__root_win)
         
         if not "test" in self.env["cmd_other_args"]:
-            PluginLoader(self.env, "StartSpeedGUI").process()
+            PluginLoader(self.env, "keystroke/StartSpeedGUI").process()
         else:
-            PluginLoader(self.env, "StartTestGUI").process()
+            PluginLoader(self.env, "keystroke/StartTestGUI").process()
 
         self.__root_win.SetSize((self.env["ui_x_size"], self.env["ui_y_size"]))
         self.__root_win.Show(True)

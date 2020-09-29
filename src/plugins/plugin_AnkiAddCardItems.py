@@ -13,8 +13,8 @@ from copy import deepcopy
 from plugin_Base import PluginBase
 
 class AnkiAddCardItems(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
 
         self.__current_time = lambda: int(round(time.time() * 1000))
 
@@ -24,7 +24,7 @@ class AnkiAddCardItems(PluginBase):
 
 
 
-    def process(self, param_map=None):
+    def process(self, **kwargs):
 
         card_items_list = self.env["card_items_list"]
 

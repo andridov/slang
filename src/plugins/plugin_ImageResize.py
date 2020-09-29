@@ -3,19 +3,19 @@ import wx
 from plugin_Base import PluginBase
 
 class ImageResize(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         
 
-    def process(self, params):
-        self.__image_resize(params)
+    def process(self, **kwargs):
+        return self.__image_resize(**kwargs)
 
 
-    def __image_resize(self, params):
+    def __image_resize(self, **kwargs):
 
-        w, h = params["image_size"] 
+        w, h = kwargs["image_size"] 
 
-        bitmap_in = params["original_bitmap"]
+        bitmap_in = kwargs["original_bitmap"]
         bw, bh = bitmap_in.GetSize()
 
         rw = w/bw
@@ -24,5 +24,6 @@ class ImageResize(PluginBase):
 
         image = bitmap_in.ConvertToImage()
         image = image.Scale(bw*r, bh*r, wx.IMAGE_QUALITY_HIGH)
-        params["out_bitmap"] = wx.Bitmap(image)
+
+        return wx.Bitmap(image)
 

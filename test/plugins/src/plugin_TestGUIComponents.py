@@ -5,8 +5,8 @@ from plugin_Base import PluginBase
 
 
 class TestGUIComponents(PluginBase):
-    def __init__(self, env, name):
-        super().__init__(env, name)
+    def __init__(self, env, name, **kwargs):
+        super().__init__(env, name, **kwargs)
         self.logger = self.env['logger']
 
     def process(self):
