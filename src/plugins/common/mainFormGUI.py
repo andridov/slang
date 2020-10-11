@@ -363,10 +363,12 @@ class CardTab:
                 self.env["prj_data_dir"])
             , wx.BITMAP_TYPE_ANY).ConvertToBitmap()
 
-        self.image = wx.StaticBitmap(p, -1)
+
+        self.image_window = wx.Panel(p)
+        self.image = wx.StaticBitmap(self.image_window)
         self.image_row = row
         self.image_col = 1
-        sizer.Add(self.image
+        sizer.Add(self.image_window
             , pos=(self.image_row,self.image_col)
             , flag=wx.EXPAND|wx.ALL)
         txt_value = "240x240" if self.caption == "Base" else "160x160"
@@ -506,7 +508,7 @@ class CardTab:
         self.definition_audio.SetValue("")
 
 
-    def bitmap_resize(self, image, size_variant):
+    def bitmap_resize(self, image, size_variant=""):
         max_size=0
 
         if self.original_bitmap is None:
@@ -515,7 +517,8 @@ class CardTab:
         if size_variant == "original":
             return self.original_bitmap #image resize not needed
         elif size_variant == "":
-            max_size = min(self.image.GetSize()[0], self.image.GetSize()[1])
+            max_size = min(
+                self.image_window.GetSize()[0], self.image_window.GetSize()[1])
         elif size_variant == "160x160": max_size = 160
         elif size_variant == "240x240": max_size = 240
         elif size_variant == "320x320": max_size = 320
@@ -542,8 +545,7 @@ class CardTab:
         out_bitmap = PluginLoader(self.env, "ImageResize").process(
             original_bitmap=
                 self.bitmap_resize(bitmap, self.image_size.GetValue())
-            , image_size=
-                self.tab_sizer.GetCellSize(self.image_row, self.image_col))
+            , image_size=self.image_window.GetSize())
         
         self.image.SetBitmap(out_bitmap)
 

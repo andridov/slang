@@ -4,16 +4,28 @@ from plugin_Base import PluginBase
 
 class ImageResize(PluginBase):
     def __init__(self, env, name, **kwargs):
+        
+        self.logging = False
+        self.__logger = None
+        if self.logging == False and "logger" in env:
+            self.__logger = env["logger"]
+            del env["logger"]
+
         super().__init__(env, name, **kwargs)
         
+        if self.logging == False and self.__logger:
+            env["logger"] = self.__logger
+
+
 
     def process(self, **kwargs):
         return self.__image_resize(**kwargs)
 
 
+
     def __image_resize(self, **kwargs):
 
-        w, h = kwargs["image_size"] 
+        w, h = kwargs["image_size"]
 
         bitmap_in = kwargs["original_bitmap"]
         bw, bh = bitmap_in.GetSize()

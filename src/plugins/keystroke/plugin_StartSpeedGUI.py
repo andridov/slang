@@ -100,16 +100,13 @@ class StartSpeedGUI(PluginBase):
 
         self.original_bitmap = wx.Image(self.env["no_image_jpg"]
             , wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        self.env["ir_image_size"] = (250, 200)
-        self.image = wx.StaticBitmap(p, size=self.env["ir_image_size"])
-        sizer.Add(self.image
+        self.image_window = wx.Panel(p)
+        self.image = wx.StaticBitmap(self.image_window)
+        sizer.Add(self.image_window
             , pos=(0, 0)
             , span=(row+1, 0)
             , flag=wx.SHAPED|wx.ALL)
         self.image.SetBitmap(self.original_bitmap)
-
-
-        p.Bind(wx.EVT_SIZE, self.__on_note_panel_size)
 
 
         for r in range(row+1):
@@ -186,13 +183,6 @@ class StartSpeedGUI(PluginBase):
         for c in range(col):
             sizer.AddGrowableCol(c)
         p.SetSizerAndFit(sizer)
-        pass
-
-
-
-    def __on_note_panel_size(self, event):
-        self.env["ir_image_size"]  = self.image.GetSize()
-        event.Skip()
 
 
 
@@ -289,7 +279,7 @@ class StartSpeedGUI(PluginBase):
                 if os.path.isfile(self.env["image_blob_file"]) \
                 else wx.Image(self.env["no_image_jpg"]
                     , wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-            , image_size=self.image.GetSize() )
+            , image_size=self.image_window.GetSize() )
         
         self.image.SetBitmap(out_bitmap)
         

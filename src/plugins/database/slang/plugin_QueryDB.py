@@ -5,7 +5,18 @@ from plugin_Base import PluginBase
 
 class QueryDB(PluginBase):
     def __init__(self, env, name, plugin_path):
+        # set logging=True if you need extra-logging
+        self.logging = False
+        self.__logger = None
+        
+        if self.logging == False and "logger" in env:
+            self.__logger = env["logger"]
+            del env["logger"]
+
         super().__init__(env, name, plugin_path=plugin_path)
+
+        if self.logging == False and self.__logger:
+            env["logger"] = self.__logger
 
 
     def process(self, **kwargs):
