@@ -66,9 +66,7 @@ project_name
 * **definition** - is meaning of term you whant to see in answer(other side of card)
 * **definition_note** - note about definition, as usual is showed smaller fonts than oter
 * **definition_audio** - soud, related with term
-* **examples** - node of examples. Could contain up to **5** items.
-
-!!! *__term__, __definition__ could be HTML text wich could be pcaced instead of traditional* 
+* **examples** - node of examples. Could contain up to **5** items. 
 
 #### HTML card templates
 + Foreign -> Native

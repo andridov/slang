@@ -1,7 +1,8 @@
 # slang Documentation
 
-**About:** this project should help you to study your language.
-started at [2.02.2019]  
+This project is mostly about watching movies (currently only mkv supported) with
+subtitles in two languages and creating Anki flash cards. 
+
 
 
 ---
@@ -24,9 +25,9 @@ projects:
 ### dependencies
 
  * [pyton dependencies](python_dependencies.txt)
- * VLC
- * ffmpeg
- * Anki (desktop mobile version)
+ * VLC (include directory with vlc.exe to path environment variable)
+ * ffmpeg (include directory with ffmpeg.exe to path environment variable
+ * Anki (desktop version)
 
 
 ---
@@ -35,19 +36,19 @@ projects:
 
 ## slang run
 
-### load python dependencies
+### installing python dependencies
 ```
 cd [slang]/doc
 pip install -f python_dependencies.txt
 ```
 
-### creating new project
+### creating new project from command line
 ```bash
 cd [slang]/src
 python3 slang.py -project-name [your_new_project_name] --create-project
 ```
 
-### open project:
+### open project from command line
 ```bash
 cd [slang]/src
 python3 slang.py -project-name [your_project_name]
@@ -78,6 +79,7 @@ python utils.py --import-db --input-file /c/Home/Temp/
 ```bash
 cd [slang]/src
 python utils.py --keystroke --language en-ru
+python utils.py --keystroke --language en-ru test
 ```
 
 

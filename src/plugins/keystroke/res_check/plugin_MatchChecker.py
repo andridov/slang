@@ -1,3 +1,7 @@
+# Slang
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+
 import wx
 import re
 
@@ -43,9 +47,11 @@ class MatchChecker(PluginBase):
 
         value = fuzz.ratio(source_text, entered_text)
 
+        special_symbols = re.sub("[A-Za-z$]", "", source_text)
+        special_symbols = re.sub("[ ]+", " ", special_symbols).strip()
         prompt_ctrl.BeginTextColour(wx.Colour(2*(100 - value), 1.3 * value, 0))
         prompt_ctrl.SetValue(self.env["value_template"].format(value)
-            + ", used symbols: [{}]".format(re.sub("[A-Za-z $]", "", source_text)))
+            + ", used symbols: [{}]".format(special_symbols))
 
 
         return False

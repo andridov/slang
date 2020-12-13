@@ -1,3 +1,7 @@
+# Slang
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+
 import os
 import re
 import wx
@@ -166,7 +170,7 @@ class StartTest():
         fr = fuzz.ratio(note["text"], entered_text) / 100
         # k = 1.0 + 2 * math.tanh(18 * fr - 15) * self.k_ratio
         k = (1.35 + 1.65 * math.tanh(15 * fr - 13)) * self.k_ratio
-        note["pace_time"] = note["pace_time"] * (1 + k)
+        note["pace_time"] = note["pace_time"] * k
         time_interval = int(self.env["minimal_time_interval_str"])
         if note["pace_time"] < time_interval:
             note["pace_time"] = time_interval
@@ -265,10 +269,15 @@ class StartTestGUI(PluginBase):
         sizer.Add(but_play, pos=(2, 0), flag=wx.EXPAND|wx.BOTTOM)
         p.Bind(wx.EVT_BUTTON, self.__on_play_audio,  but_play)
 
+        def_b_font = self.env["fonts"]["definition"]["base"]
+
         # definition note
         self.definition_note = wx.TextCtrl(p
             , size=(800, 50)
             , style=wx.TE_MULTILINE|wx.TE_READONLY)
+        font_dn = wx.Font(def_b_font["size_small"]
+            , wx.MODERN, wx.NORMAL, wx.NORMAL, False, def_b_font["name"])
+        self.definition_note.SetFont(font_dn)
         sizer.Add(self.definition_note
             , pos=(0, 1), flag=wx.EXPAND|wx.BOTTOM)
 
@@ -276,9 +285,8 @@ class StartTestGUI(PluginBase):
         self.definition = wx.TextCtrl(p
             , size=(800, 150)
             , style=wx.TE_MULTILINE|wx.TE_READONLY)
-        b_font = self.env["fonts"]["definition"]["base"]
-        font_d = wx.Font(b_font["size_large"]
-            , wx.MODERN, wx.NORMAL, wx.NORMAL, False, b_font["name"])
+        font_d = wx.Font(def_b_font["size_large"]
+            , wx.MODERN, wx.NORMAL, wx.NORMAL, False, def_b_font["name"])
         self.definition.SetFont(font_d)
         sizer.Add(self.definition
             , pos=(1, 1), span=(2, 1),flag=wx.EXPAND|wx.ALL)

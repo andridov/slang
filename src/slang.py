@@ -1,7 +1,6 @@
-
-"""
-Study LANguage project.
-"""
+# Slang
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 import argparse
 import os

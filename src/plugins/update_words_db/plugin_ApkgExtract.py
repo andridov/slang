@@ -1,3 +1,7 @@
+# Slang
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+
 from zipfile import ZipFile
 
 from plugin_Base import PluginBase

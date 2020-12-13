@@ -1,3 +1,7 @@
+# Slang
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+
 import os
 import wx
 import wx.richtext
@@ -810,6 +814,9 @@ class VideoTab:
 
         self.video_panel = wx.Panel(splitter, size=(200,150))
         self.video_panel.SetBackgroundColour(wx.BLACK)
+        nb.Bind(wx.EVT_RIGHT_DOWN, self.__on_video_right_down)
+        self.tab_panel.Bind(wx.EVT_RIGHT_DOWN, self.__on_video_right_down)
+        splitter.Bind(wx.EVT_RIGHT_DOWN, self.__on_video_right_down)
         self.video_panel.Bind(wx.EVT_RIGHT_DOWN, self.__on_video_right_down)
 
         self.bottom_panel = wx.Panel(splitter, size=(200,50))

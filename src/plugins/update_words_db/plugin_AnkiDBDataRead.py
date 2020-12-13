@@ -90,9 +90,9 @@ class AnkiDBDataRead(PluginBase):
             i += 1
             itm["definition"] = fields[i]
             i += 1
-            itm["definition_note"] = self.__get_sound_name(fields[i])
+            itm["definition_note"] = fields[i]
             i += 1
-            itm["definition_audio"] = fields[i]
+            itm["definition_audio"] = self.__get_sound_name(fields[i])
             i += 1
             #adding ids and timestamps
 

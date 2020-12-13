@@ -1,6 +1,5 @@
 # SQL
 this is the most common quieris used for sland_db sqlite database.
-You need to have SQLiteStudio.
 
 
 ### List of notes in study progress:
@@ -84,6 +83,32 @@ END;
     );
 
     update deques set tags_scope_id=(select current_scope_id from temp_vars) where id=(select deque_id from temp_vars);
+```
+
+# removing duplicated note
+
+```sql
+--select notes to delete
+select max(n.id), n.term as id_to_delete
+from notes n
+group by n.term having count(n.term) > 1
+
+--delete this notes from achievements first
+delete from achievements
+where 
+    item_id in (
+        select max(n.id) as id_to_delete
+        from notes n
+        group by n.term having count(n.term) > 1)
+    and item_type_id in (
+        select id from types where name = 'note')
+    
+-- delete items from notes table
+delete from notes
+where id in(
+    select max(n.id) as id_to_delete
+        from notes n
+        group by n.term having count(n.term) > 1)
 ```
 
 # other links:

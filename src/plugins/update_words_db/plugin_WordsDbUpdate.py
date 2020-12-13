@@ -1,3 +1,7 @@
+# Slang
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+
 import os
 import sys
 import glob
@@ -136,6 +140,18 @@ class WordsDbUpdate(PluginBase):
 
 
 
+    def __update_card(self, deque_id, card):
+        if "id" not in card:
+            return
+
+        # get notes ids for [note, ex_1, ex_2, ... ex_5]
+        notes = []
+        note_ids = []
+        notes.append(card)
+        notes.extend(card["examples"])
+
+
+
     def __insert_card(self, deque_id, card):
         if not card or not deque_id:
             return
@@ -144,11 +160,13 @@ class WordsDbUpdate(PluginBase):
         q_res = PluginLoader(self.env, self.env["sl_db_query"]).process(
             queries_list=[{ 
             "query": self.env["sql_select_existing_notes_by_time"]
-            , "data" : (card["creation_time"],) }] )
+            , "data": (card["creation_time"],) }] )
         if len(q_res[0]):
             self.logger.warning("Note(& expamles) already present in database: "
                 "card_creation_time={}, term={}".format(
                     card["creation_time"], card["term"]))
+
+            # __update_card(self, deque_id, card)
             return
 
         self.__cursor.execute(self.env["sql_insert_card"].format(

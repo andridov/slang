@@ -1,3 +1,7 @@
+# Slang
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+
 import os
 
 from sl_pluginLoader import PluginLoader
@@ -5,7 +9,17 @@ from plugin_Base import PluginBase
 
 class LoadNoteMedia(PluginBase):
     def __init__(self, env, name, **kwargs):
+        
+        self.logging = False
+        self.__logger = None
+        if self.logging == False and "logger" in env:
+            self.__logger = env["logger"]
+            del env["logger"]
+
         super().__init__(env, name, **kwargs)
+
+        if self.logging == False and self.__logger:
+            env["logger"] = self.__logger
         
 
     def process(self, **kwargs):
