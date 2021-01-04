@@ -8,6 +8,8 @@ import traceback
 import urllib.parse
 import urllib.request
 
+from sl_env import Env
+from sl_pluginLoader import PluginLoader
 from plugin_Base import PluginBase
 
 
@@ -20,30 +22,83 @@ class LoadImageFromUrl(PluginBase):
 
 
     def process(self, **kwargs):
-        self.env["plugin_load_image_status"] = self.__load_image_from_url()
+        if "url" not in kwargs:
+            self.logger.error("Url expected in ImageUrlProcess.process method")
+            return False
+        self.__url = kwargs["url"]
+
+        self.__dst_image_file = ""
+        if "dst_file" not in kwargs:
+            self.__dst_image_file = self.env["prj_temp_dir"] + "/temp_img_file"
+        else:
+            self.__dst_image_file = kwargs["dst_file"]
+
+        try:
+            
+            return self.__load_image_from_url()
+        
+        except Exception as e:
+            self.logger.error(
+                "LoadImageFromUrl, exception error: {}".format(e))
+            self.logger.error(traceback.format_exc())
+        except:
+            self.logger.error("LoadImageFromUrl, Unexpected error")
+            self.logger.error(traceback.format_exc())
 
 
 
     def __load_image_from_url(self):
 
-        self.__url = self.env["plugin_image_url"]
-        self.__dst_image_file = self.env["plugin_dst_image_file"]
-
         if not self.__url:
             return False
 
-        for reg_pattern in self.env["url_regex_patterns_list"]:
-            re_result = re.match(self.env[reg_pattern], self.__url)
+        for pattern in self.env["url_regex_handlers_list"]:
+            re_result = re.match(pattern["regex"], self.__url)
             if re_result:
-                return self.__try_urlretrieve(re_result.group(1))
+                return getattr(self, pattern["handler"])(re_result)
 
         return False
 
 
 
-    def __try_urlretrieve(self, url):
+    # handlers
+    def handler_empty_string(self, re_match):
+        return True
+
+
+
+    def handler_youglish(self, re_match):
+        return PluginLoader(self.env, "YouglishLoad").process(url=self.__url)
+
+
+
+    def hander_google_search(self, re_match):
+        encoded_url = urllib.parse.unquote(self.__url)
+        img_re = self.env["google_search_url_regex"]
+
+        self.logger.debug(encoded_url)
+
+        m = re.search(img_re, encoded_url)
+        if not m:
+            self.logger.warning("can't parse google imgres: {}".format(url))
+            return False
+
+        if m.group(1):
+            self.__url = m.group(1)
+            return self.__try_urlretrieve()
+
+        return False
+
+
+
+    def hander_link_location(self, re_match):
+        return self.__try_urlretrieve()
+
+
+
+    def __try_urlretrieve(self):
         try:
-            url = self.__url_decode(url)
+            url = self.__url_decode(self.__url)
 
             self.logger.info("loading image from url={}".format(url))
 

@@ -15,8 +15,8 @@
 	"build_systems":
 	[
 		{
-			"name": "slang test",
-			"cmd": [ "python", "-u", "slang.py", "-project-name", "test"],
+			"name": "slang_test",
+			"cmd": [ "python", "tests.py"],
 			"env":{
 				"PYTHONPATH": ".", 
 				"PYTHONIOENCODING": "utf8"

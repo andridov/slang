@@ -35,8 +35,7 @@ class GatherCardItemMediaData(PluginBase):
         length = len(update_items_list)
         for i in range(length):
             self.__attach_images(tab_ids_list[i], update_items_list[i])
-            if i == 0 or self.env['save_examples_audio'] == True:
-                self.__attach_audios(tab_ids_list[i], update_items_list[i])
+            self.__attach_audios(tab_ids_list[i], update_items_list[i])
 
 
 
@@ -77,11 +76,12 @@ class GatherCardItemMediaData(PluginBase):
 
     def __attach_audios(self, tab_from, item_to):
         mdm = self.env["media_data_mapping"]
+
         self.__attach_audio(
             item_to
             , "term"
             , "term_audio"
-            , getattr(tab_from, mdm["term_audio_obj"]).GetValue()
+            , getattr(tab_from, mdm["term_audio_obj"])
             , "{}_{}".format(tab_from.caption, "term"))
         
         if not self.env["save_definition_audio"]:
@@ -92,7 +92,7 @@ class GatherCardItemMediaData(PluginBase):
             item_to
             , "definition"
             , "definition_audio"
-            , getattr(tab_from, mdm["definition_audio_obj"]).GetValue()
+            , getattr(tab_from, mdm["definition_audio_obj"])
             , "{}_{}".format(tab_from.caption, "def"))
 
 
@@ -101,20 +101,15 @@ class GatherCardItemMediaData(PluginBase):
         , item_to
         , text_fld_caption
         , audio_fld_caption
-        , audio_file
+        , audio_obj
         , suffix):
 
         media_data_mapping = self.env["media_data_mapping"]
 
-        if audio_file and os.path.isfile(audio_file):
-            item_to[audio_fld_caption] = audio_file
+        if audio_obj and os.path.isfile(audio_obj.GetValue()):
+            item_to[audio_fld_caption] = audio_obj.GetValue()
             return
 
-        if not text_fld_caption in item_to or not item_to[text_fld_caption]:
-            item_to[audio_fld_caption] = ""
-            return
-
-        # saving to file take place here
 
         # creating full file name
         full_file_name = "{}/{}_{}.mp3".format(
@@ -122,9 +117,23 @@ class GatherCardItemMediaData(PluginBase):
             , self.__url_encode(item_to[text_fld_caption])[0:50]
             , suffix.replace(' ', '_'))
         rel_file_name = os.path.relpath(full_file_name).replace('\\','/')
-        
 
-        if audio_file == "file-snipping" \
+
+        if audio_obj.save_data_to_file(full_file_name):
+            audio_obj.clear()
+            return
+
+
+        if suffix != "Base" and self.env['save_examples_audio'] == False:
+            return
+
+
+        if not text_fld_caption in item_to or not item_to[text_fld_caption]:
+            item_to[audio_fld_caption] = ""
+            return
+
+
+        if audio_obj.GetValue() == "file-snipping" \
             and "video_audio_file" in self.env \
             and os.path.isfile(self.env["video_audio_file"]):
 

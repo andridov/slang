@@ -39,7 +39,12 @@ class OpenProject(PluginBase):
             return False
     
         known_args = self.env["cmd_known_args"]
-        self.env["sl_project_name"] = known_args.project_name
+        if "project_name" in known_args:
+            self.env["sl_project_name"] = known_args.project_name
+
+            if known_args.create_project == False \
+                and known_args.delete_project == False:
+                return True
 
         if known_args.create_project:
             self.__create_new_project()

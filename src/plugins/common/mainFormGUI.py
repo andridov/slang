@@ -5,6 +5,7 @@
 import os
 import wx
 import wx.richtext
+import wx.lib.newevent
 import re
 import vlc
 import sys
@@ -287,6 +288,7 @@ class MainFormGUI:
 
 
 
+
 #drag-n-drop handler: text
 class TextDropTarget(wx.TextDropTarget):
     def __init__(self, textCtrl):
@@ -312,6 +314,40 @@ class ImageDropTarget(wx.FileDropTarget):
         self.tabCtrl.logger.info("dropped: {}".format(data))
         return True
 
+
+
+class AudioEdit(wx.TextCtrl):
+    def __init__(self, parent):
+        self.__audio_data = None
+        super().__init__(parent)
+
+
+    def SetValue(self, value):
+        if os.path.isfile(value):
+            with open(value, "rb") as af :
+                self.__audio_data = bytearray(af.read())
+            value = "[audio_data]"
+
+        super().SetValue(value)
+
+
+    def has_audio_data(self):
+        return True if self.__audio_data else False
+
+
+    def save_data_to_file(self, file_name):
+        edit_value = super().GetValue()
+        if self.__audio_data and edit_value == "[audio_data]":
+            with open(file_name, "wb") as af:
+                af.write(self.__audio_data)
+            return True
+
+        return False
+
+
+    def clear(self):
+        self.__audio_data = None
+        super().SetValue("")
 
 
 
@@ -354,7 +390,7 @@ class CardTab:
         sizer.Add(btn_term_audio
             , pos=(row, 0)
             , flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-        self.term_audio = wx.TextCtrl(p)
+        self.term_audio = AudioEdit(p)
         self.__set_bgcolor(self.term_audio)
         sizer.Add(self.term_audio,
             pos = (row, 1), flag = wx.EXPAND|wx.LEFT|wx.RIGHT)
@@ -427,7 +463,7 @@ class CardTab:
         sizer.Add(btn_definition_audio
             , pos=(row, 0)
             , flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-        self.definition_audio = wx.TextCtrl(p)
+        self.definition_audio = AudioEdit(p)
         self.__set_bgcolor(self.definition_audio)
         sizer.Add(self.definition_audio
             , pos = (row, 1), flag = wx.EXPAND|wx.LEFT|wx.RIGHT)
@@ -512,6 +548,7 @@ class CardTab:
         self.definition_audio.SetValue("")
 
 
+
     def bitmap_resize(self, image, size_variant=""):
         max_size=0
 
@@ -545,6 +582,7 @@ class CardTab:
         return result
 
 
+
     def __image_set_bitmap(self, bitmap):
         out_bitmap = PluginLoader(self.env, "ImageResize").process(
             original_bitmap=
@@ -552,6 +590,7 @@ class CardTab:
             , image_size=self.image_window.GetSize())
         
         self.image.SetBitmap(out_bitmap)
+
 
 
     def __paste_image_from_clipboard(self):
@@ -570,10 +609,16 @@ class CardTab:
 
 
     def load_video_file(self):
-        img = wx.Image(self.env["video_snapshot_file"], wx.BITMAP_TYPE_ANY)
-        self.original_bitmap = wx.Bitmap(img)
-        self.__image_set_bitmap(self.original_bitmap) 
+        self.load_image_file(self.env["video_snapshot_file"]) 
         self.image_url.SetValue("snapshot")
+
+
+
+    def load_image_file(self, src_image):
+        img = wx.Image(src_image, wx.BITMAP_TYPE_ANY)
+        self.original_bitmap = wx.Bitmap(img)
+        self.__image_set_bitmap(self.original_bitmap)
+
 
 
     def load_audio_file(self):
@@ -606,55 +651,25 @@ class CardTab:
 
 
     def __on_image_url_change(self, event):
-        try:
-            url = self.image_url.GetValue()
-            if not url:
-                return
+        url = self.image_url.GetValue()
+        dst_file=self.env["prj_temp_dir"] + "/temp_img_file"
+        result = PluginLoader(self.env, "LoadImageFromUrl").process(url=url
+            , dst_file=dst_file)
 
-            if url == "snapshot":
-                # item already added/saved to temprorary local file
-                return
-
-            if url == "$":
-                self.__paste_image_from_clipboard()
-                return
-
-            #try to load image via plugin 
-            file_name = self.env["prj_temp_dir"] + "/temp_img_file"
-            self.env["plugin_image_url"] = url
-            self.env["plugin_dst_image_file"] = file_name
-
-            PluginLoader(self.env, "LoadImageFromUrl").process()
-
-            if self.env["plugin_load_image_status"]:
-                img = wx.Image(file_name, wx.BITMAP_TYPE_ANY)
-                self.original_bitmap = wx.Bitmap(img)
-                self.__image_set_bitmap(self.original_bitmap)
-
-        except Exception as e:
-            self.logger.error(
-                "__on_image_url_change, error: {}".format(e))
-
-        except:
-            self.logger.error("__on_image_url_change, Unexpected error")
+        if isinstance(result, dict):
+            # extended  answer
+            if result["status"] == True:
+                self.term.SetValue(result["term_text"])
+                self.load_image_file(result["image_file"])
+                if "definition_text" in result:
+                    self.definition.SetValue(result["definition_text"])
+                else:
+                    self.definition.SetValue("")
+                self.term_audio.SetValue(result["audio_file"])
+        elif result:
+            self.load_image_file(dst_file)
 
 
-    def __extract_img_url_from_google_search(self, url):
-        encoded_url = urllib.parse.unquote(url)
-        img_re = r".+imgres\?imgurl=(.+)(&imgrefurl|\?).+"
-
-        self.logger.debug(encoded_url)
-
-        m = re.search(img_re, encoded_url)
-        if not m:
-            self.logger.warning("can't parse google imgres: {}".format(url))
-            return
-
-        if m.group(1):
-            res = m.group(1)
-            return res
-
-        return ""
 
     def __on_definition_change(self, event):
         pass
@@ -786,8 +801,28 @@ class SubtPopupMenu(wx.Menu):
 
 
 
-# video processing (video tab could be disabled)
 
+#drag-n-drop handler: text
+class LinkDropTarget(wx.TextDropTarget):
+    def __init__(self, video_tab_object):
+        wx.TextDropTarget.__init__(self)
+        self.video_tab_object = video_tab_object
+
+
+    def OnDropText(self, x, y, text):
+        # self.video_tab_object(text)
+        self.video_tab_object.logger.info("received link: {}".format(text))
+        # self.EVT_LOAD_LINK(self.video_tab_object, text)
+        # because we use drag-n-drop mechanism during link loading we need 
+        # to create new event and finish this one.
+        # self.video_tab_object.on_link_load(text)
+        wx.CallAfter(self.video_tab_object.on_link_load, text)
+        return True
+
+
+
+
+# video processing (video tab could be disabled)
 class VideoTab:
     def __init__(self, nb, caption, env, logger):
         self.env = env
@@ -799,6 +834,8 @@ class VideoTab:
 
         self.vlc_instance = vlc.Instance()
         self.vlc_player = self.vlc_instance.media_player_new()
+
+        self.LoadLinkEvent, self.EVT_LOAD_LINK = wx.lib.newevent.NewEvent()
 
         self.__init_gui(nb, caption)
         self.load_previous_state()
@@ -818,6 +855,8 @@ class VideoTab:
         self.tab_panel.Bind(wx.EVT_RIGHT_DOWN, self.__on_video_right_down)
         splitter.Bind(wx.EVT_RIGHT_DOWN, self.__on_video_right_down)
         self.video_panel.Bind(wx.EVT_RIGHT_DOWN, self.__on_video_right_down)
+        # self.video_panel.Bind(self.EVT_LOAD_LINK, self.on_link_load)
+        self.video_panel.SetDropTarget(LinkDropTarget(self))
 
         self.bottom_panel = wx.Panel(splitter, size=(200,50))
         self.__draw_bottom_panel(self.bottom_panel)
@@ -1090,21 +1129,25 @@ class VideoTab:
 
 
     def on_load(self, evt):
-        video = ''
-        dlg = wx.FileDialog(self.tab_panel, "Choose a video file"
+        dlg = wx.FileDialog(self.tab_panel
+            , "Choose a video file or youtube link"
             , os.path.expanduser('~'), "", "*.*", wx.FD_OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            video = os.path.join(dlg.GetDirectory(), dlg.GetFilename())
+            source = dlg.GetFilename()
+            directory = dlg.GetDirectory()
         # finally destroy the dialog
         dlg.Destroy()
 
-        if not os.path.isfile(video):
-            return
+        # do prep settings here        
+        PluginLoader(self.env, "InitVideoParams").process(
+            source=source, directory=directory)
+        self.__start_playing_video()
 
-        # do prep settings here
-        self.env["last_played_file"] = str(video)
-        
-        PluginLoader(self.env, "InitVideoParams").process()
+
+
+    def on_link_load(self, evt):
+        PluginLoader(self.env, "InitVideoParams").process(
+            source=evt, directory=self.env["sl_global_temp_file"])
         self.__start_playing_video()
 
 
@@ -1118,7 +1161,7 @@ class VideoTab:
         self.__load_video(self.env["last_played_file"])
         self.__load_subtitles()
 
-        # wait for video loading to process futher customization
+        # wait for video loading to proces
         while not self.vlc_player.is_playing():
             time.sleep(0.1)
 
@@ -1132,6 +1175,7 @@ class VideoTab:
                 self.env["video_audio_track"]))
             self.vlc_player.audio_set_track(self.env["video_audio_track"])
 
+        self.vlc_player.video_set_spu(-1)
 
 
     def on_play_pause(self, evt):

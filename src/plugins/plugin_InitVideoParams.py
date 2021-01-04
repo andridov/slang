@@ -9,12 +9,15 @@ import wx, wx.dataview
 import subprocess
 
 from plugin_Base import PluginBase
-
+from sl_pluginLoader import PluginLoader
 
 
 class InitVideoParams(PluginBase):
     def __init__(self, env, name, **kwargs):
         super().__init__(env, name, **kwargs)
+
+        if "last_played_file" not in self.env:
+            self.env["last_played_file"] = ""
 
         self.env["last_position"] = 0
         self.env["video_audio_track"] = 0
@@ -22,28 +25,32 @@ class InitVideoParams(PluginBase):
         self.env["video_subt1_file"] = ""
         self.env["video_subt2_file"] = ""
 
-        self.__video_handlers = {
-            MKVHandler(self.env, self.logger)
-        }
+        self.__video_handlers = [
+            MKVHandler(self.env, self.logger),
+            YoutubeLinkHandler(self.env, self.logger)
+        ]
 
 
 
     def process(self, **kwargs):
+        if "source" not in kwargs \
+            or "directory" not in kwargs:
+            self.logger.error("Missing argumets for InitVideoParams.process")
+            return
+
+        self.__source_name = kwargs["source"]
+        self.__directory_name = kwargs["directory"]
         self.__process_with_handlers()
 
 
 
     def __process_with_handlers(self):
-        input_video_source = self.env["last_played_file"]
-        if not input_video_source:
-            return
-
         self.env["videos_map"] = {}
         self.env["audios_map"] = {}
         self.env["subtitles_map"] = {}
 
         for handler in self.__video_handlers:
-            if not handler.match(input_video_source):
+            if not handler.match(self.__directory_name, self.__source_name):
                 continue
 
             handler.pre_process()
@@ -193,24 +200,33 @@ class MKVHandler:
         self.logger = logger
 
 
-    def match(self, source):
+    def match(self, directory_name, source_name):
+        source = "{}/{}".format(directory_name, source_name)
+        if not os.path.isfile(source):
+            return False
+
         if (re.match(self.env["reg_mkv_source"], source)):
             self.logger.info("Processing source with MKVHandler handler")
+
+            self.env["last_played_file"] = source
             return True
+
         return False
 
 
     def pre_process(self):
 
-        command = self.env["pre_mkv_command"]
-        command.append(self.env["last_played_file"])
-        self.logger.info("running command: {}".format(command))
+        command = PluginLoader(self.env, "CmdRun").process(
+                run_file=self.env["video_file_commands"]
+                , cmd_name="command_get_media_file_info"
+                , media_file=self.env["last_played_file"]
+                , get_command_only=True)
+
         cmd = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
         cmd.wait()
         search_text = str(out if out else err)
-        #self.logger.info("ff_text={}".format(search_text))
 
         def search_and_add(reg_name, text, out_map):
             pattern = re.compile(self.env[reg_name], re.MULTILINE)
@@ -252,62 +268,87 @@ class MKVHandler:
             if v == self.env["subt2_selected"]:
                 self.env["video_subt2_file"] = self.__create_subtitle_file(k)
 
-    
 
 
     def __create_audio_file(self, track_map_id):
         out_file = ""
 
         self.logger.info("extracting audio track id: {}".format(track_map_id))
-        self.env["input_audio_map_value"] = track_map_id
-        self.env["output_audio_file_value"] = "{}/audio_{}.mp3".format(
-            os.path.dirname(self.env["last_played_file"])
-            , track_map_id.replace(':', '_'))
-        
-        command = []
-        for cn in self.env["audio_mkv_command_param_names"]:
-            command.append(self.env[cn])
 
-        self.logger.info("executing audio command: {}".format(command))
-        out_file = self.env["output_audio_file_value"]
+        active_dir = os.path.dirname(self.env["last_played_file"])
+        in_file_name = os.path.basename(self.env["last_played_file"])
+        out_file = "{}/{}_audio_{}.mp3".format(
+            active_dir, in_file_name, track_map_id.replace(':', '_'))
 
-        cmd = subprocess.Popen(command)
-        cmd.wait()
+        status = PluginLoader(self.env, "CmdRun").process(
+                run_file=self.env["video_file_commands"]
+                , cmd_name="command_extract_audio_track"
+                , in_file=self.env["last_played_file"]
+                , track_id=track_map_id
+                , out_file=out_file
+                , active_dir=active_dir)
 
-        self.logger.info("executing audio_command, done.")
-        # restore values
-        self.env["input_audio_map_value"] = ""
-        self.env["output_audio_file_value"] = ""
+        if not status:
+            self.logger.error("Can't extract audio track.")
+            return None
 
         return out_file
 
 
 
     def __create_subtitle_file(self, track_map_id):
-        outfile = ""
 
-        self.logger.info(
-            "extracting subtitle track id: {}".format(track_map_id))
+        self.logger.info("extracting subts track id: {}".format(track_map_id))
 
-        self.env["input_subtitle_map_value"] = track_map_id
-        self.env["output_subtitle_file_value"] = "{}/subtitle_{}.srt".format(
-            os.path.dirname(self.env["last_played_file"])
-            , track_map_id.replace(':', '_'))
-        
-        command = []
-        for cn in self.env["subtitle_mkv_command_param_names"]:
-            command.append(self.env[cn])
+        active_dir = os.path.dirname(self.env["last_played_file"])
+        in_file_name = os.path.basename(self.env["last_played_file"])
+        out_file = "{}/{}_subtitle_{}.srt".format(
+            active_dir, in_file_name, track_map_id.replace(':', '_'))
 
-        self.logger.info("executing audio command: {}".format(command))
-        out_file = self.env["output_subtitle_file_value"]
+        status = PluginLoader(self.env, "CmdRun").process(
+                run_file=self.env["video_file_commands"]
+                , cmd_name="command_extract_subtitles"
+                , in_file=self.env["last_played_file"]
+                , track_id=track_map_id
+                , out_file=out_file
+                , active_dir=active_dir)
 
-        cmd = subprocess.Popen(command)
-        cmd.wait()
+        if not status:
+            self.logger.warning("Can't extract subtitles track.")
+            return None
 
-        self.logger.info("executing audio_command, done.")
-        # restore values
-        self.env["input_subtitle_map_value"] = ""
-        self.env["output_subtitle_file_value"] = ""
+        PluginLoader(self.env, "PreprocessSubtitleFile").process(
+            subt_file=out_file)
 
         return out_file
+
+
+
+
+class YoutubeLinkHandler(MKVHandler):
+    def __init__(self, env, logger):
+        super().__init__(env, logger)
+        self.env = env
+        self.logger = logger
+        self.__vid = None
+
+
+
+    def match(self, directory_name, source_name):
+
+        m = re.match(self.env["reg_youtube_source"], source_name)
+        if m:
+            self.logger.info("Processing source with YoutubeLink handler")
+            self.__vid = m.group(1)
+            
+            result = PluginLoader(self.env, "CmdRun").process(
+                run_file=self.env["youtube_load_commands"]
+                , vid=self.__vid, out_dir=directory_name)
+
+            file_name = "{}.mp4".format(self.__vid) 
+
+            return super().match(directory_name, file_name)
+
+        return False
+
 

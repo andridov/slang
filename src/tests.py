@@ -1,67 +1,50 @@
-
-"""
-Study LANGuage project. Tests
-Copyright: Andridov and contributors
-License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-"""
+# Slang. Study LANGuage project. Tests
+# Copyright: Andridov and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 import argparse
 import os
 import sys
+import traceback
+import shutil
 
 from sl_logger import Logger
 from sl_env import Env
-
-sys.path.insert(1, './plugins')
-sys.path.insert(2, './plugins/common')
-sys.path.insert(3, './test/plugins/config')
-sys.path.insert(1, './test/plugins/src')
-
-from sl_pluginLoader import PluginLoader
 from sl_pepProcessor import PluginEntryPointProcessor
+from sl_pluginLoader import PluginLoader
 
 
 # these variables needed to initialize log and start to parse slang.eng.json
 # other variables should be loaded via *.env.json files
-K_LOG_FILE = "../logs/tests.log"
+K_LOG_FILE = "../logs/slang.log"
 
 # start looking for base env.folder in project folder, than use default
-K_ENV_CONFIG_DIR_1 = "../data/projects/{}/config"
-K_ENV_CONFIG_DIR_2 = "../data/config"
 K_SOLUTION_DIR = "./.."
-K_PROJECT_NAME = "Tests"
+K_ENV_CONFIG_DIR = "../data/config"
+
 
 
 
 def do_argparse():
-    parser = argparse.ArgumentParser(description='utils conmmand line')
+    parser = argparse.ArgumentParser(description='Study LANGuage command line')
 
-    # base arguments/actions
-    parser.add_argument('--extract-pm3'
-         , dest='extract_mp3', action='store_true'
-         , help="splits full mp3 sound track into multiple mp3, " \
-            "acordingly to subtitles intervals, save them to db \n" \
-            " \tlist of additional arguments:"
-            " \t  [--input-file]")
+    parser.add_argument('-project-name', metavar='n', type=str, required=False
+        , help='the name of the project')
 
-    # auxilary arguments (could be used in combination with any base args)
-    # parser.add_argument('--project-name', metavar='n', type=str
-    #     , help='the name of the project')
+    parser.add_argument('--create-project'
+        , dest='create_project', action='store_true'
+        , help="create project, if it does not exist")
 
+    parser.add_argument('--delete-project'
+        , dest='delete_project', action='store_true'
+        , help="DELETE(without additional prompt!!!) project, if it is exist")
 
-    parser.add_argument
-
-    args, other_args = parser.parse_known_args()
+    args, other_args = parser.parse_known_args(["-project-name", "test"])
 
     return [args, other_args]
 
 
 
-def set_config_dir(env):
-    config_dir = K_ENV_CONFIG_DIR_1.format(env['sl_project_name'])
-    if not os.path.isdir(config_dir):
-        config_dir = K_ENV_CONFIG_DIR_2
-    env['sl_config_dir'] = config_dir
 
 
 
@@ -76,40 +59,67 @@ def main():
     env = Env()
     env['logger'] = logger
     # adding required/mandatory variables
-    env['solution_dir'] = K_SOLUTION_DIR
-    env['sl_project_name'] = K_PROJECT_NAME
-    set_config_dir(env)
+    env['solution_dir'] = os.path.realpath(K_SOLUTION_DIR)
+    env['sl_config_dir'] = os.path.realpath(K_ENV_CONFIG_DIR)
     env['cmd_known_args'] = known_args
     env['cmd_other_args'] = other_args
-
-    # adding common slang.env envirionment
+    
     env.append_env("{}/slang.env.json".format(env['sl_config_dir']))
-    # override config dir and save the main before
-    env['sl_cfg_plugin_dir_main'] = env['sl_cfg_plugin_dir'] 
-    env['sl_cfg_plugin_dir'] = '../test/plugins/config'
-    env['sl_testing_plugin_dir'] = '../test/plugins/src'
-    env.print_env()
+
+    try:
+
+        PluginLoader(env, "OpenProject").process()
+        PluginLoader(env, "LoadProjectEnv").process()
+        env.print_env()
+        logger.info("==> definition_lang = {}".format(env["definition_lang"]))
+
+        do_test(env)
+
+    except Exception as e:
+        logger.error("test, exception error: {}".format(e))
+        logger.error(traceback.format_exc())
+    except:
+        logger.error("test, Unexpected error")
+        logger.error(traceback.format_exc())
 
 
-    sys.path.insert(1, os.path.realpath(env["sl_testing_plugin_dir"]))
+    
+
+    # 
 
 
-    # if env["cmd_known_args"].extract_mp3:
-    #     PluginLoader(env, "SplitSoundTrack").process()
-    #     return
+def do_test(env):
+    logger = Logger(K_LOG_FILE).get_logger()
 
-    # if env["cmd_known_args"].update_known_words_db:
-    #     sys.path.insert(1, './plugins/known_words_db')
-    #     pepp = PluginEntryPointProcessor(env, "sl_pep_UpdateKnownWordsDb")
-    #     pepp.process()
-    #     return
+    # env.print_env()
 
+    subt_file_src = "{}/subt_src.srt".format(env["prj_temp_dir"])
+    subt_file = "{}/subt.srt".format(env["prj_temp_dir"])
+    if os.path.isfile(subt_file):
+        os.remove(subt_file)
 
-    # run all tests
-    # sys.path.insert(1, './test')
-    # pepp = PluginEntryPointProcessor(env, "sl_pep_Tests")
-    # pepp.process()
-    # return
+    shutil.copyfile(subt_file_src, subt_file)
+
+    # PluginLoader(env, "PreprocessSubtitleFile").process(subt_file=subt_file)
+
+    import wx
+    
+    # env["last_played_file"] = ""
+    # env.append_env("{}/ui_open.env.json".format(env["prj_config_local_dir"]))
+    # env.append_env("{}/video.project.env.json".format(
+    #     env["prj_config_local_dir"]))
+    # app = wx.App(False)
+   
+    # env.print_env()
+
+    # PluginLoader(env, "InitVideoParams").process(
+    #     source="https://youtu.be/KvE9j2vTpSg"
+    #     , directory=env["prj_temp_dir"])
+
+    result = PluginLoader(env, "YouglishLoad").process(
+         url="https://youglish.com/getbyid/87917135/hilarious/english")
+    logger.info("==> result = {}".format(result))
+
 
 
 main()
