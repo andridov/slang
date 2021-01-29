@@ -420,7 +420,7 @@ class StartSpeedGUI(PluginBase):
                 sql_query_item = {}
                 sql_query_item["query"] = self.env["sql_insert_item_to_scope"]
                 sql_query_item["data"] = ('note', err_note_ids_scope, enid)
-                squeries_list.append(sql_query_item)
+                queries_list.append(sql_query_item)
             PluginLoader(self.env, self.env["sl_db_query"]).process(
                 queries_list=queries_list)
         else:

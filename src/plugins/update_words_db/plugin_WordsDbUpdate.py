@@ -65,11 +65,28 @@ class WordsDbUpdate(PluginBase):
         language_id = records[0][0]
         self.logger.info("language_id = {}".format(language_id))
 
+        self.logger.info("==> {}: {}".format(1, ""))
+
         tags_scope_id = self.__insert_scope()
 
+        self.logger.info("==> {}: {} ---> {}".format(2
+            , self.env["sql_insert_deque"]
+            , (self.__deque_name
+                , language_id
+                , self.__deque_description
+                , tags_scope_id)))
+
+
         deque_id = 0
+
         self.__cursor.execute(self.env["sql_insert_deque"], (self.__deque_name
             , language_id, self.__deque_description, tags_scope_id))
+
+
+        self.logger.info("==> {}: {} ---> {}".format(3
+            , self.env["sql_select_deque"]
+            , (self.__deque_name, language_id)))
+
         self.__cursor.execute(self.env["sql_select_deque"].format(
             file_name=self.__deque_name, language_id=language_id))
         records = self.__cursor.fetchall()
@@ -86,7 +103,7 @@ class WordsDbUpdate(PluginBase):
         # for delete_instruction in self.env["sql_delete_deque_instructions"]:
         #     self.__cursor.execute(delete_instruction.format(deque_id=deque_id))
 
-        for card in self.env["card_items"]:
+        for card in self.env["card_items"]: 
             self.__insert_card(deque_id, card)
 
         # update deque data (version, and description)
@@ -158,9 +175,10 @@ class WordsDbUpdate(PluginBase):
 
         # check the card id
         q_res = PluginLoader(self.env, self.env["sl_db_query"]).process(
-            queries_list=[{ 
-            "query": self.env["sql_select_existing_notes_by_time"]
-            , "data": (card["creation_time"],) }] )
+            db_cursor = self.__cursor
+            , query = self.env["sql_select_existing_notes_by_time"]
+            , data = (card["creation_time"],) )
+        
         if len(q_res[0]):
             self.logger.warning("Note(& expamles) already present in database: "
                 "card_creation_time={}, term={}".format(
@@ -182,6 +200,14 @@ class WordsDbUpdate(PluginBase):
         notes.append(card)
         notes.extend(card["examples"])
         for note in notes:
+
+            self.logger.info("==> {}: {} ---> {}".format(4
+            , "note"
+            , (card_id
+                , note["creation_time"]
+                , note["mod_time"]
+                , note["term"]
+                , note["term_audio"])))
             
             prefix = self.env["words_db_note_prefix"] 
             if prefix in note["term_note"] or prefix in note["definition_note"]:
@@ -193,6 +219,14 @@ class WordsDbUpdate(PluginBase):
             term_audio_id = self.__insert_media(note["term_audio"])
             image_id = self.__insert_media(note["image"])
             definition_audio_id = self.__insert_media(note["definition_audio"])
+
+            self.logger.info("==> {}: {} ---> {}".format(5
+            , self.env["sql_insert_note"]
+            , (card_id
+                , note["creation_time"]
+                , note["mod_time"]
+                , note["term"]
+                , note["term_audio"])))
 
             self.__cursor.execute(self.env["sql_insert_note"], (
                 card_id
@@ -208,16 +242,22 @@ class WordsDbUpdate(PluginBase):
 
             note_ids.append(self.__cursor.lastrowid)
 
+
+        self.logger.info("==> {}: {} ---> {}".format(6
+            , self.env["sql_update_card"]
+            , (card_id
+                , note["term"])))
+
         note_len = len(note_ids)
-        self.__cursor.execute(self.env["sql_update_card"].format(
-            card_id=card_id
-            , deque_id=deque_id
-            , base_note_id = note_ids[0]
-            , ex_1_note_id = note_ids[1] if note_len > 1 else 'NULL' 
-            , ex_2_note_id = note_ids[2] if note_len > 2 else 'NULL'
-            , ex_3_note_id = note_ids[3] if note_len > 3 else 'NULL'
-            , ex_4_note_id = note_ids[4] if note_len > 4 else 'NULL'
-            , ex_5_note_id = note_ids[5] if note_len > 5 else 'NULL'))
+        self.__cursor.execute(self.env["sql_update_card"]
+            , (deque_id                                   # deque_id
+                , note_ids[0]                             # base_note_id
+                , note_ids[1] if note_len > 1 else 'NULL' # ex_1_note_id
+                , note_ids[2] if note_len > 2 else 'NULL' # ex_2_note_id
+                , note_ids[3] if note_len > 3 else 'NULL' # ex_3_note_id
+                , note_ids[4] if note_len > 4 else 'NULL' # ex_4_note_id
+                , note_ids[5] if note_len > 5 else 'NULL' # ex_5_note_id
+                , card_id))                               # card_id
 
 
 

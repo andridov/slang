@@ -93,12 +93,12 @@ def do_test(env):
 
     # env.print_env()
 
-    subt_file_src = "{}/subt_src.srt".format(env["prj_temp_dir"])
-    subt_file = "{}/subt.srt".format(env["prj_temp_dir"])
-    if os.path.isfile(subt_file):
-        os.remove(subt_file)
+    # subt_file_src = "{}/subt_src.srt".format(env["prj_temp_dir"])
+    # subt_file = "{}/subt.srt".format(env["prj_temp_dir"])
+    # if os.path.isfile(subt_file):
+    #     os.remove(subt_file)
 
-    shutil.copyfile(subt_file_src, subt_file)
+    # shutil.copyfile(subt_file_src, subt_file)
 
     # PluginLoader(env, "PreprocessSubtitleFile").process(subt_file=subt_file)
 
@@ -116,9 +116,11 @@ def do_test(env):
     #     source="https://youtu.be/KvE9j2vTpSg"
     #     , directory=env["prj_temp_dir"])
 
-    result = PluginLoader(env, "YouglishLoad").process(
-         url="https://youglish.com/getbyid/87917135/hilarious/english")
-    logger.info("==> result = {}".format(result))
+    # result = PluginLoader(env, "YouglishLoad").process(
+    #      url="https://youglish.com/getbyid/87917135/hilarious/english")
+    # logger.info("==> result = {}".format(result))
+
+    result = PluginLoader(env, "CheckDependencies").process()
 
 
 

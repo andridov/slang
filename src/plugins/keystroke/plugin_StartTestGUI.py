@@ -1,3 +1,4 @@
+
 # Slang
 # Copyright: Andridov and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
@@ -477,6 +478,7 @@ class StartTestGUI(PluginBase):
         player = vlc_instance.media_player_new()
         media = vlc_instance.media_new(audio_file)
         player.set_media(media)
+        player.audio_set_volume(100)
         player.play()
 
 

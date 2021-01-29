@@ -45,11 +45,9 @@ class GatherCardItemMediaData(PluginBase):
 
 
     def __attach_images(self, tab_from, item_to):
-        media_data_mapping = self.env["media_data_mapping"]
+        mdm = self.env["media_data_mapping"]
 
-        img_url_text = getattr(
-            tab_from, media_data_mapping["image_url_obj"]).GetValue()
-
+        img_url_text = getattr(tab_from, mdm["image_url_obj"]).GetValue()
         if not img_url_text:
             return
 
@@ -57,14 +55,15 @@ class GatherCardItemMediaData(PluginBase):
             item_to["image"] = img_url_text
             return
 
-        orig_bitmap = getattr(tab_from, media_data_mapping["bitmap_obj"])
+
+        orig_bitmap = getattr(tab_from, mdm["bitmap_obj"])
         image_size_txt = getattr(
-            tab_from, media_data_mapping["image_size_obj"]).GetValue()
+            tab_from, mdm["image_size_obj"]).GetValue()
         bitmap = tab_from.bitmap_resize(orig_bitmap, image_size_txt)
         suffix = tab_from.caption
         full_file_name = "{}/{}_{}.jpg".format(
             self.env["prj_image_dir"]
-            , self.__url_encode(self.env["card_item_term"])[0:50]
+            , self.__url_encode(item_to["term"])[0:50]
             , suffix.replace(' ', '_'))
 
         rel_file_name = os.path.relpath(full_file_name).replace('\\','/')
@@ -107,6 +106,7 @@ class GatherCardItemMediaData(PluginBase):
         media_data_mapping = self.env["media_data_mapping"]
 
         if audio_obj and os.path.isfile(audio_obj.GetValue()):
+            # file already present. just use it
             item_to[audio_fld_caption] = audio_obj.GetValue()
             return
 
@@ -121,6 +121,7 @@ class GatherCardItemMediaData(PluginBase):
 
         if audio_obj.save_data_to_file(full_file_name):
             audio_obj.clear()
+            item_to[audio_fld_caption] = rel_file_name
             return
 
 

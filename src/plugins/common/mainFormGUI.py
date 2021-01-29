@@ -1176,6 +1176,7 @@ class VideoTab:
             self.vlc_player.audio_set_track(self.env["video_audio_track"])
 
         self.vlc_player.video_set_spu(-1)
+        self.vlc_player.audio_set_volume(100)
 
 
     def on_play_pause(self, evt):
