@@ -288,7 +288,7 @@ class MKVHandler:
                 , out_file=out_file
                 , active_dir=active_dir)
 
-        if not status:
+        if not os.path.isfile(out_file):
             self.logger.error("Can't extract audio track.")
             return None
 

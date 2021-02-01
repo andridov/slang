@@ -12,6 +12,12 @@ class SaveAudioFromFile(PluginBase):
         
 
     def process(self, **kwargs):
+        if "out_file" not in kwargs:
+            raise Exception("the destination file is absent,"\
+                " specify the 'out_file' parameter for this plugin")
+
+
+
         command = []
         for cn in self.env["command_param_names"]:
             command.append(self.env[cn])

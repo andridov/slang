@@ -156,13 +156,14 @@ class MainFormGUI:
             tab_obj[0].definition.SetValue(
                 self.__fv_video.get_definition_text())
             tab_obj[0].load_video_file()
-            tab_obj[0].load_audio_file()
+            
             if self.__fv_video and self.__fv_video.subtitle_1:
                 from_to = self.__fv_video.subtitle_1.get_from_to(
                     self.__fv_video.time)
                 if from_to:
                     self.env["current_subtitle1_from"] = from_to[0]
                     self.env["current_subtitle1_to"] = from_to[1]
+            tab_obj[0].load_audio_file()
 
 
             # move to the Base tab
@@ -622,12 +623,23 @@ class CardTab:
 
 
     def load_audio_file(self):
+
         if not "video_audio_file" in self.env \
             or not self.env["video_audio_file"]:
             return
+
+        # ==>
         # nothing to save here, see plugin_GatherCardItemMediaData
-        self.term_audio.SetValue("file-snipping")
-        self.definition_audio.SetValue("file-snipping")
+        # self.term_audio.SetValue("file-snipping")
+        # self.definition_audio.SetValue("file-snipping")
+
+        dst_file=self.env["prj_temp_dir"] + "/temp_audio_file.mp3"
+        if dst_file:
+            os.remove(dst_file) 
+        self.logger.info(f"==> {__file__}: dst_file = {dst_file}")
+        PluginLoader(self.env, "CmdRun").process(
+            run_file=self.env["audio_file_commands"], out_file=dst_file)
+        self.term_audio.SetValue(dst_file)
 
 
 

@@ -118,31 +118,26 @@ class GatherCardItemMediaData(PluginBase):
             , suffix.replace(' ', '_'))
         rel_file_name = os.path.relpath(full_file_name).replace('\\','/')
 
-
         if audio_obj.save_data_to_file(full_file_name):
             audio_obj.clear()
             item_to[audio_fld_caption] = rel_file_name
             return
 
-
         if suffix != "Base" and self.env['save_examples_audio'] == False:
             return
-
 
         if not text_fld_caption in item_to or not item_to[text_fld_caption]:
             item_to[audio_fld_caption] = ""
             return
 
+        # ==>
+        # if audio_obj.GetValue() == "file-snipping" \
+        #     and "video_audio_file" in self.env \
+        #     and os.path.isfile(self.env["video_audio_file"]):
 
-        if audio_obj.GetValue() == "file-snipping" \
-            and "video_audio_file" in self.env \
-            and os.path.isfile(self.env["video_audio_file"]):
-
-            self.__get_audio_from_file(rel_file_name)
-            item_to[audio_fld_caption] = rel_file_name
-            return
-
-
+        #     self.__get_audio_from_file(rel_file_name)
+        #     item_to[audio_fld_caption] = rel_file_name
+        #     return
 
         # using default audio engine here
         url=""
@@ -166,8 +161,9 @@ class GatherCardItemMediaData(PluginBase):
 
 
 
-    def __get_audio_from_file(self, rel_file_name):
-        self.env["out_audio_file_name"] = rel_file_name
-        PluginLoader(self.env, "SaveAudioFromFile").process()
+    # def __get_audio_from_file(self, rel_file_name):
+    #     PluginLoader(self.env, "CmdRun").process(
+    #         run_file=self.env["audio_file_commands"], out_file=rel_file_name)
+    #     self.logger.info(f"audio track saved: {rel_file_name}")
 
 
