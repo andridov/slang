@@ -130,15 +130,6 @@ class GatherCardItemMediaData(PluginBase):
             item_to[audio_fld_caption] = ""
             return
 
-        # ==>
-        # if audio_obj.GetValue() == "file-snipping" \
-        #     and "video_audio_file" in self.env \
-        #     and os.path.isfile(self.env["video_audio_file"]):
-
-        #     self.__get_audio_from_file(rel_file_name)
-        #     item_to[audio_fld_caption] = rel_file_name
-        #     return
-
         # using default audio engine here
         url=""
         if  text_fld_caption=="term":
@@ -158,12 +149,5 @@ class GatherCardItemMediaData(PluginBase):
             f.write(r.content)
 
         item_to[audio_fld_caption] = rel_file_name
-
-
-
-    # def __get_audio_from_file(self, rel_file_name):
-    #     PluginLoader(self.env, "CmdRun").process(
-    #         run_file=self.env["audio_file_commands"], out_file=rel_file_name)
-    #     self.logger.info(f"audio track saved: {rel_file_name}")
 
 

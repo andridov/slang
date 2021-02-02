@@ -574,10 +574,6 @@ class CardTab:
         r = max_size/w if w > h else max_size/h
         image = self.original_bitmap.ConvertToImage()
 
-        # self.logger.info("===> size_variant=({}) orig_image({}, {}),"\
-        #     "size={} r -> {}  out_image({} ,{})".format(
-        #         size_variant, w, h, max_size, r,  w*r, h*r))
-
         image = image.Scale(w*r, h*r, wx.IMAGE_QUALITY_HIGH)
         result = wx.Bitmap(image)
         return result
@@ -628,15 +624,9 @@ class CardTab:
             or not self.env["video_audio_file"]:
             return
 
-        # ==>
-        # nothing to save here, see plugin_GatherCardItemMediaData
-        # self.term_audio.SetValue("file-snipping")
-        # self.definition_audio.SetValue("file-snipping")
-
         dst_file=self.env["prj_temp_dir"] + "/temp_audio_file.mp3"
         if dst_file:
             os.remove(dst_file) 
-        self.logger.info(f"==> {__file__}: dst_file = {dst_file}")
         PluginLoader(self.env, "CmdRun").process(
             run_file=self.env["audio_file_commands"], out_file=dst_file)
         self.term_audio.SetValue(dst_file)

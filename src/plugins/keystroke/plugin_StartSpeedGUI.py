@@ -502,8 +502,6 @@ class StartSpeedGUI(PluginBase):
         time_interval = int(self.env["minimal_time_interval_str"])
         if note["pace_time"] < time_interval:
             note["pace_time"] = time_interval
-        # self.logger.info("===> R: {}, K:{} [{}] == {} <=> {}".format(
-        #     fr, k, note["pace_time"], source_text, entered_text))
 
 
 

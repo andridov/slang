@@ -65,27 +65,12 @@ class WordsDbUpdate(PluginBase):
         language_id = records[0][0]
         self.logger.info("language_id = {}".format(language_id))
 
-        self.logger.info("==> {}: {}".format(1, ""))
-
         tags_scope_id = self.__insert_scope()
-
-        self.logger.info("==> {}: {} ---> {}".format(2
-            , self.env["sql_insert_deque"]
-            , (self.__deque_name
-                , language_id
-                , self.__deque_description
-                , tags_scope_id)))
-
 
         deque_id = 0
 
         self.__cursor.execute(self.env["sql_insert_deque"], (self.__deque_name
             , language_id, self.__deque_description, tags_scope_id))
-
-
-        self.logger.info("==> {}: {} ---> {}".format(3
-            , self.env["sql_select_deque"]
-            , (self.__deque_name, language_id)))
 
         self.__cursor.execute(self.env["sql_select_deque"].format(
             file_name=self.__deque_name, language_id=language_id))
@@ -94,14 +79,6 @@ class WordsDbUpdate(PluginBase):
         deque_version = records[0][4]
         if not self.__deque_description:
             self.__deque_description = records[0][5]
-
-        # find and delete existing cards/notes/media
-        # deletion do not applied anymore
-        # !!! all existing cards will remain without changes, only new ones 
-        # will  be added
-
-        # for delete_instruction in self.env["sql_delete_deque_instructions"]:
-        #     self.__cursor.execute(delete_instruction.format(deque_id=deque_id))
 
         for card in self.env["card_items"]: 
             self.__insert_card(deque_id, card)
@@ -199,15 +176,8 @@ class WordsDbUpdate(PluginBase):
         note_ids = []
         notes.append(card)
         notes.extend(card["examples"])
-        for note in notes:
 
-            self.logger.info("==> {}: {} ---> {}".format(4
-            , "note"
-            , (card_id
-                , note["creation_time"]
-                , note["mod_time"]
-                , note["term"]
-                , note["term_audio"])))
+        for note in notes:
             
             prefix = self.env["words_db_note_prefix"] 
             if prefix in note["term_note"] or prefix in note["definition_note"]:
@@ -219,14 +189,6 @@ class WordsDbUpdate(PluginBase):
             term_audio_id = self.__insert_media(note["term_audio"])
             image_id = self.__insert_media(note["image"])
             definition_audio_id = self.__insert_media(note["definition_audio"])
-
-            self.logger.info("==> {}: {} ---> {}".format(5
-            , self.env["sql_insert_note"]
-            , (card_id
-                , note["creation_time"]
-                , note["mod_time"]
-                , note["term"]
-                , note["term_audio"])))
 
             self.__cursor.execute(self.env["sql_insert_note"], (
                 card_id
@@ -241,12 +203,6 @@ class WordsDbUpdate(PluginBase):
                 , definition_audio_id))
 
             note_ids.append(self.__cursor.lastrowid)
-
-
-        self.logger.info("==> {}: {} ---> {}".format(6
-            , self.env["sql_update_card"]
-            , (card_id
-                , note["term"])))
 
         note_len = len(note_ids)
         self.__cursor.execute(self.env["sql_update_card"]
