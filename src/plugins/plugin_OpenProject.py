@@ -320,6 +320,8 @@ class ExistingProjPanel:
 
     def __show_projects(self):
         projects = self._trc_list.AddRoot("Existing_Projects")
+        if not os.path.exists(self.op.env["sl_projects_dir"]):
+            os.makedirs(self.op.env["sl_projects_dir"])
         for d in os.listdir(self.op.env["sl_projects_dir"]):
             self._trc_list.AppendItem(projects, d)
 

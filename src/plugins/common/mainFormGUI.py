@@ -625,7 +625,7 @@ class CardTab:
             return
 
         dst_file=self.env["prj_temp_dir"] + "/temp_audio_file.mp3"
-        if dst_file:
+        if os.path.isfile(dst_file):
             os.remove(dst_file) 
         PluginLoader(self.env, "CmdRun").process(
             run_file=self.env["audio_file_commands"], out_file=dst_file)
@@ -1149,7 +1149,7 @@ class VideoTab:
 
     def on_link_load(self, evt):
         PluginLoader(self.env, "InitVideoParams").process(
-            source=evt, directory=self.env["sl_global_temp_file"])
+            source=evt, directory=self.env["sl_temp_dir"])
         self.__start_playing_video()
 
 
