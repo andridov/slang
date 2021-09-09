@@ -1,6 +1,6 @@
 # slang Documentation
 
-This project is mostly about watching movies (currently only mkv supported) with
+This project is mostly about watching movies with
 subtitles in two languages and creating Anki flash cards. 
 
 
@@ -83,20 +83,6 @@ python utils.py --keystroke --language en-ru test
 ```
 
 
-### ffmpeg
-
-show stream info:
-`ffprobe -i my_file.mkv`
-
-extract sound track:
-`ffmpeg -i my_file.mkv -map 0:2 -b:a 320k out.mp3`
-`ffmpeg -i my_file.mkv -map 0:8 -b:a 64k -ac 2 out.mp3`
-
-`ffmpeg -i file.mp4 -b:a 64k -ac 2 out.mp3`
-
-extract from youtube:
-`youtube-dl --all-subs -f best ...`
-`ffmpeg -i my_file.mkv -b:a 64k -ac 2 out.mp3`
 
 
 ---

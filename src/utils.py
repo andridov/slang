@@ -56,6 +56,12 @@ def do_argparse():
             + " \tlist of additional arguments:"
             + " \t  [--input-file]")
 
+    parser.add_argument('--create-audio-track'
+         , dest='create_audio_track', action='store_true'
+         , help="creates audio track witl phrases to lean \n" \
+            + " \tlist of mandatroy arguments:"
+            + " \t  [--output-file]")
+
 
     # auxilary arguments (could be used in combination with any base args)
     parser.add_argument('--project-name', metavar='n', type=str
@@ -127,5 +133,10 @@ def main():
         pepp.process()
         return
 
+    if env["cmd_known_args"].create_audio_track:
+        sys.path.insert(1, './plugins/audio_process')
+        pepp = PluginEntryPointProcessor(env, "sl_pep_AudioTrackCreator")
+        pepp.process()
+        return
 
 main()

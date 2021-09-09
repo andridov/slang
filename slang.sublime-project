@@ -1,40 +1,50 @@
 {
-	
-	"folders":
+	"build_systems":
 	[
 		{
-			"path": ".",
-			"folder_exclude_patterns": ["__pycache__"],
-			"follow_symlinks": true
+			"cmd":
+			[
+				"python",
+				"tests.py"
+			],
+			"env":
+			{
+				"PYTHONIOENCODING": "utf8",
+				"PYTHONPATH": "."
+			},
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "slang_test",
+			"selector": "source.python",
+			"working_dir": "$project_path/src"
 		},
+		{
+			"cmd":
+			[
+				"python",
+				"utils.py",
+				"--keystroke",
+				"--language",
+				"en-ru"
+			],
+			"env":
+			{
+				"PYTHONIOENCODING": "utf8",
+				"PYTHONPATH": "."
+			},
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "keystroke test",
+			"selector": "source.python",
+			"working_dir": "$project_path/src"
+		}
 	],
 	"folder_exclude_patterns":
 	[
 		"pycache*"
 	],
-	"build_systems":
+	"folders":
 	[
 		{
-			"name": "slang_test",
-			"cmd": [ "python", "tests.py"],
-			"env":{
-				"PYTHONPATH": ".", 
-				"PYTHONIOENCODING": "utf8"
-			},
-			"working_dir": "$project_path/src",
-			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
-			"selector": "source.python"
-		},
-		{
-			"name": "keystroke test",
-			"cmd": [ "python", "utils.py", "--keystroke", "--language", "en-ru" ],
-			"env":{
-				"PYTHONPATH": ".", 
-				"PYTHONIOENCODING": "utf8"
-			},
-			"working_dir": "$project_path/src",
-			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
-			"selector": "source.python"
+			"path": "."
 		}
 	]
 }
