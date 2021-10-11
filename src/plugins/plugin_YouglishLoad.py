@@ -1,10 +1,9 @@
 import requests
 import urllib
 import re
-import json
-import time
 import os
 import shutil
+import subprocess
 
 
 from sl_env import Env
@@ -85,6 +84,24 @@ class YouglishLoad(PluginBase):
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
+    def __run_command(self, run_file, cmd_name, **kwargs):
+        command = PluginLoader(self.env, "CmdRun").process(
+            run_file=run_file
+            , cmd_name=cmd_name
+            , get_command_only=True
+            , **kwargs)
+
+        output_str = ""
+        p = subprocess.Popen(command,
+            shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        retval = p.wait()
+
+        for line in p.stdout.readlines():
+            output_str += line.decode("utf-8", 'ignore')
+
+        return (retval, output_str.strip())
+
+
 
     def __process(self):
         self.logger.debug("YouglishLoad run")        
@@ -105,9 +122,10 @@ class YouglishLoad(PluginBase):
         term_text = self.__get_request_data(data, "src_text_regex", True)
         vid = self.__get_request_data(data, "src_vid_regex", True)
 
-        result = PluginLoader(self.env, "CmdRun").process(
+        # alternate way of downloading subtitles, video, audio
+        PluginLoader(self.env, "CmdRun").process(
             run_file="youglish.env.json"
-            , cmd_name="command_yt_media_download", vid=vid)
+            , cmd_name="command_yt_subtitles_download", vid=vid)
 
         subt_file = self.__find_subt_file(vid, self.env["term_lang"])
         if not subt_file:
@@ -116,23 +134,57 @@ class YouglishLoad(PluginBase):
 
         PluginLoader(self.env, "PreprocessSubtitleFile").process(
             subt_file=subt_file)
-
+        
         s_e_time = self.__find_s_e_time(subt_file, term_text)
         if not s_e_time:
             s_e_time = self.__find_s_e_time(subt_file, self.__searched_text)
         start_time, end_time = s_e_time
         
-        # extract audio
-        result = PluginLoader(self.env, "CmdRun").process(
+        response = self.__run_command(run_file="youglish.env.json"
+            , cmd_name="command_yt_get_media_link", vid=vid)
+                
+        PluginLoader(self.env, "CmdRun").process(
             run_file="youglish.env.json"
-            , cmd_name="command_extract_audio"
-            , vid=vid, start=start_time, end=end_time)
+            , cmd_name="command_ffmpeg_download_video"
+            , vid=vid, media_link=response[1]
+            , start=start_time, end=end_time)
+
+        PluginLoader(self.env, "CmdRun").process(
+            run_file="youglish.env.json"
+            , cmd_name="command_extract_full_audio", vid=vid)
+        
+        PluginLoader(self.env, "CmdRun").process(
+            run_file="youglish.env.json"
+            , cmd_name="command_save_image_0", vid=vid)
+
+        # result = PluginLoader(self.env, "CmdRun").process(
+        #     run_file="youglish.env.json"
+        #     , cmd_name="command_yt_media_download", vid=vid)
+
+        # subt_file = self.__find_subt_file(vid, self.env["term_lang"])
+        # if not subt_file:
+        #     raise Exception("Can't open subtitle file for language: {}".format(
+        #         self.env["term_lang"]))
+
+        # PluginLoader(self.env, "PreprocessSubtitleFile").process(
+        #     subt_file=subt_file)
+
+        # s_e_time = self.__find_s_e_time(subt_file, term_text)
+        # if not s_e_time:
+        #     s_e_time = self.__find_s_e_time(subt_file, self.__searched_text)
+        # start_time, end_time = s_e_time
+        
+        # # extract audio
+        # result = PluginLoader(self.env, "CmdRun").process(
+        #     run_file="youglish.env.json"
+        #     , cmd_name="command_extract_audio"
+        #     , vid=vid, start=start_time, end=end_time)
 
         # extract image
-        result = PluginLoader(self.env, "CmdRun").process(
-            run_file="youglish.env.json"
-            , cmd_name="command_save_image"
-            , vid=vid, start=self.__to_str(self.__middle_time))
+        # result = PluginLoader(self.env, "CmdRun").process(
+        #     run_file="youglish.env.json"
+        #     , cmd_name="command_save_image"
+        #     , vid=vid, start=self.__to_str(self.__middle_time))
 
 
         self.__term_text = term_text

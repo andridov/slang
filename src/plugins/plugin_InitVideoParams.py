@@ -62,6 +62,11 @@ class InitVideoParams(PluginBase):
 
     def __show_gui(self):
 
+        self.env["video_selected"] = ""
+        self.env["audio_selected"] = ""
+        self.env["subt1_selected"] = ""
+        self.env["subt2_selected"] = ""
+
         root_win = wx.Dialog(None, wx.ID_ANY
             , pos=(self.env["ui_x_pos"], self.env["ui_y_pos"]))
         root_win.SetTitle("Stream selection window")
@@ -77,38 +82,30 @@ class InitVideoParams(PluginBase):
         lbl_video = wx.StaticText(p, -1, "video stream to play")
         sizer.Add(lbl_video, pos=(row,col), flag=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM)
         row += 1
-        txt_video = wx.TextCtrl(p)
-        sizer.Add(txt_video, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
-        txt_video.SetDropTarget(TextDropTarget(txt_video))
-        txt_video.Bind(wx.EVT_TEXT, self.__on_select_video)
-        txt_video.Bind(wx.EVT_TEXT_PASTE, self.__on_select_video)
+        self.txt_video = wx.TextCtrl(p)
+        sizer.Add(self.txt_video, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
+        self.txt_video.SetDropTarget(TextDropTarget(self.txt_video, self.env, "video_selected"))
         row += 1
         lbl_audio = wx.StaticText(p, -1, "audio stream to play")
         sizer.Add(lbl_audio, pos=(row,col), flag=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM)
         row += 1
-        txt_audio = wx.TextCtrl(p)
-        sizer.Add(txt_audio, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
-        txt_audio.SetDropTarget(TextDropTarget(txt_audio))
-        txt_audio.Bind(wx.EVT_TEXT, self.__on_select_audio)
-        txt_audio.Bind(wx.EVT_TEXT_PASTE, self.__on_select_audio)
+        self.txt_audio = wx.TextCtrl(p)
+        sizer.Add(self.txt_audio, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
+        self.txt_audio.SetDropTarget(TextDropTarget(self.txt_audio, self.env, "audio_selected"))
         row += 1
         lbl_subt1 = wx.StaticText(p, -1, "subtitle-term to play")
         sizer.Add(lbl_subt1, pos=(row,col), flag=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM)
         row += 1
-        txt_subt1 = wx.TextCtrl(p)
-        sizer.Add(txt_subt1, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
-        txt_subt1.SetDropTarget(TextDropTarget(txt_subt1))
-        txt_subt1.Bind(wx.EVT_TEXT, self.__on_select_subt1)
-        txt_subt1.Bind(wx.EVT_TEXT_PASTE, self.__on_select_subt1)
+        self.txt_subt1 = wx.TextCtrl(p)
+        sizer.Add(self.txt_subt1, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
+        self.txt_subt1.SetDropTarget(TextDropTarget(self.txt_subt1, self.env, "subt1_selected"))
         row += 1
         lbl_subt2 = wx.StaticText(p, -1, "subtitle-definition to play")
         sizer.Add(lbl_subt2, pos=(row,col), flag=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM)
         row += 1
-        txt_subt2 = wx.TextCtrl(p)
-        sizer.Add(txt_subt2, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
-        txt_subt2.SetDropTarget(TextDropTarget(txt_subt2))
-        txt_subt2.Bind(wx.EVT_TEXT, self.__on_select_subt2)
-        txt_subt2.Bind(wx.EVT_TEXT_PASTE, self.__on_select_subt2)
+        self.txt_subt2 = wx.TextCtrl(p)
+        sizer.Add(self.txt_subt2, pos=(row,col), flag = wx.EXPAND|wx.LEFT)
+        self.txt_subt2.SetDropTarget(TextDropTarget(self.txt_subt2, self.env, "subt2_selected"))
         row += 1
         growable_row = row
         sizer.Add(wx.Panel(p), pos=(row, col))
@@ -127,12 +124,7 @@ class InitVideoParams(PluginBase):
         sizer.AddGrowableCol(1)
         p.SetSizerAndFit(sizer)
 
-        self.env["video_selected"] = ""
-        self.env["audio_selected"] = ""
-        self.env["subt1_selected"] = ""
-        self.env["subt2_selected"] = ""
-
-        root_win.SetSize((600, 250))
+        root_win.SetSize((800, 500))
         root_win.ShowModal()
         root_win.Destroy()
 
@@ -163,33 +155,21 @@ class InitVideoParams(PluginBase):
         for k,v in self.env["subtitles_map"].items():
             trk_list.AppendItem(subtitles, v)
         trk_list.ExpandAll()
-
-
-
-    def __on_select_video(self, event):
-        self.env["video_selected"] = event.GetString()
-
-    def __on_select_audio(self, event):
-        self.env["audio_selected"] = event.GetString()
-
-    def __on_select_subt1(self, event):
-        self.env["subt1_selected"] = event.GetString()
-
-    def __on_select_subt2(self, event):
-        self.env["subt2_selected"] = event.GetString()
-
   
 
 
 #drag-n-drop handler: text
 class TextDropTarget(wx.TextDropTarget):
-    def __init__(self, textCtrl):
+    def __init__(self, textCtrl, env, key):
         wx.TextDropTarget.__init__(self)
+        self.env = env
+        self.key = key
         self.textCtrl = textCtrl
 
 
     def OnDropText(self, x, y, data):
         self.textCtrl.SetValue(data)
+        self.env[self.key] = data
         return True
 
 # ------------------------------------------------------------------------------
@@ -226,7 +206,7 @@ class MKVHandler:
             command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
         cmd.wait()
-        search_text = str(out if out else err)
+        search_text = (out if out else err).decode("utf-8")
 
         def search_and_add(reg_name, text, out_map):
             pattern = re.compile(self.env[reg_name], re.MULTILINE)
@@ -256,16 +236,16 @@ class MKVHandler:
         #     if v == self.env["video_selected"]:
 
         for k,v in self.env["audios_map"].items():
-            if v == self.env["audio_selected"]:
+            if self.env["audio_selected"] == v:
                 self.env["video_audio_track"] = int(k.split(':')[1])
                 self.env["video_audio_file"] = self.__create_audio_file(k)
 
         for k,v in self.env["subtitles_map"].items():
-            if v == self.env["subt1_selected"]:
+            if self.env["subt1_selected"] == v:
                 self.env["video_subt1_file"] = self.__create_subtitle_file(k)
 
         for k,v in self.env["subtitles_map"].items():
-            if v == self.env["subt2_selected"]:
+            if self.env["subt2_selected"] == v:
                 self.env["video_subt2_file"] = self.__create_subtitle_file(k)
 
 

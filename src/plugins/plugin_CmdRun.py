@@ -87,7 +87,7 @@ class CmdRun(PluginBase):
         # 2. start time
 
         # command execution
-        return_code = subprocess.call(command, shell=True)
+        return_code = subprocess.call(command)
         # 3. end time
 
         if return_code != 0:
